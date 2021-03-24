@@ -1,8 +1,3 @@
-import sqlite3
-import random
-import numpy as np
-import math
-import os
 import seaborn as sns
 import cv2
 import matplotlib.pyplot as plt
@@ -43,6 +38,7 @@ class Dataset:
         # Plot it
         bars = sns.barplot(x="size_string", y="count", data=top_10.reset_index())
         bars.set_xticklabels(top_10.reset_index()['size_string'], rotation=90)
+        print(top_10)
         plt.tight_layout()
         plt.savefig("figures/dataset_img_size_top10")
         plt.show()

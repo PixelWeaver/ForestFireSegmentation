@@ -1,6 +1,7 @@
-import dataset
-
+from dataset import Dataset
+from workbench import Workbench
 
 if __name__ == '__main__':
-    dataset.Dataset.print_cdfb_statistics()
+    Dataset.print_cdfb_statistics()
+
 

@@ -5,7 +5,7 @@
       <excludeFolder url="file://$MODULE_DIR$/venv" />
       <excludeFolder url="file://$MODULE_DIR$/corsican_fire_db" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.9 (ForestFireSegmentation)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.8 (ForestFireSegmentation)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">
