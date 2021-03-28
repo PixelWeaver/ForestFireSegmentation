@@ -1,16 +1,10 @@
-import sqlite3
 import random
 import json
+from datetime import datetime
 
 
 class Parameters:
     def __init__(self):
-        conn = sqlite3.connect('samples.db')
-        c = conn.cursor()
-        self.min_seq_size = c.execute('SELECT MIN(count) FROM (SELECT COUNT(*) AS count FROM snapshots GROUP BY sample_id)').fetchone()[0]
-        conn.close()
-
-        self.seq_size = random.choice(list(range(5, self.min_seq_size + 1)))
         self.epochs = random.choice(list(range(1, 76)))
         self.batch_size = random.choice([16, 32, 64, 128])
         self.hidden_count = random.choice([1, 2, 3])
@@ -23,10 +17,11 @@ class Parameters:
         self.bias_l2 = random.choice([0, 0.01, 0.02])
         self.recurrent_l1 = random.choice([0, 0.01, 0.02])
         self.recurrent_l2 = random.choice([0, 0.01, 0.02])
+        self.loss = "binary_crossentropy"
+        self.input_dim = (200, 200)
 
     def to_dict(self):
         return {
-            "seq_size": self.seq_size,
             "epochs": self.epochs,
             "batch_size": self.batch_size,
             "hidden_count": self.hidden_count,
@@ -38,16 +33,21 @@ class Parameters:
             "bias_l1": self.bias_l1,
             "bias_l2": self.bias_l2,
             "recurrent_l1": self.recurrent_l1,
-            "recurrent_l2": self.recurrent_l2
+            "recurrent_l2": self.recurrent_l2,
+            "loss": self.loss,
+            "input_dim": self.input_dim
         }
 
-    def to_file(self):
-        with open('parameters/parameters.json', 'w') as fp:
+    def save(self, name=None):
+        if name is None:
+            name = datetime.now().strftime('%d_%m_%Y_%I_%M_%p')
+
+        with open(f'parameters/{name}.json', 'w') as fp:
             json.dump(self.to_dict(), fp, sort_keys=True, indent=4)
 
     @staticmethod
-    def from_file():
-        with open('parameters/parameters.json', 'r') as fp:
+    def from_file(name):
+        with open(f'parameters/{name}.json', 'r') as fp:
             data = json.load(fp)
             output = Parameters()
             output.seq_size = data["seq_size"]
@@ -63,6 +63,8 @@ class Parameters:
             output.bias_l2 = data["bias_l2"]
             output.recurrent_l1 = data["recurrent_l1"]
             output.recurrent_l2 = data["recurrent_l2"]
+            output.loss = data["loss"]
+            output.input_dim = data["input_dim"]
             return output
 
     @staticmethod
@@ -80,5 +82,7 @@ class Parameters:
             "bias_l1",
             "bias_l2",
             "recurrent_l1",
-            "recurrent_l2"
+            "recurrent_l2",
+            "loss",
+            "input_dim"
         ]

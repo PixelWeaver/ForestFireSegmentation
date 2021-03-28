@@ -1,56 +1,77 @@
-import tensorflow as tf  # ! TensorFlow 2.0 !
+import abc
+from abc import abstractmethod
+import tensorflow as tf
+from tensorflow.keras.layers import *
+
+metrics = [
+    tf.keras.metrics.AUC(name='auc'),
+    tf.keras.metrics.Recall(name='recall'),
+    tf.keras.metrics.TruePositives(name='tp'),
+    tf.keras.metrics.TrueNegatives(name='tn'),
+    tf.keras.metrics.FalsePositives(name='fp'),
+    tf.keras.metrics.FalseNegatives(name='fn'),
+    tf.keras.metrics.Accuracy(name='accuracy'),
+    tf.keras.metrics.Precision(name='precision'),
+    tf.keras.metrics.MeanIoU(num_classes=2, name='iou'),
+    tf.keras.metrics.BinaryAccuracy(name='bin_accuracy'),
+]
 
 
-class MalwareDetectionModel:
-    def __init__(self, input_dim, output_dim, params):
+class Model:
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, params):
         self.parameters = params
-        self.input_dim = input_dim
-        self.output_dim = output_dim
+        self.graph = None
 
-    def build(self):
-        graph = tf.keras.Sequential()
+    @abstractmethod
+    def build(self, optimizer):
+        pass
+
+    def train(self, x_train, y_train, x_val, y_val):
+        self.graph = tf.keras.Model
+        self.graph.fit(x_train, y_train,
+                       self.parameters.batch_size,
+                       self.parameters.epochs,
+                       validation_data=(x_val, y_val))
+
+    def test(self, x_test, y_test):
+        pass  # Do not implement/use before testing all architectures
+
+
+class MalwareDetectionModel(Model):
+    def __init__(self, params):
+        super().__init__(params)
+
+    def build(self, optimizer):
+        self.graph = tf.keras.Sequential()
 
         # Input layer
-        graph.add(
+        self.graph.add(
             tf.keras.layers.Bidirectional(
                 self.base_layer(True),
-                input_shape=self.input_dim)
+                input_shape=self.parameters.input_dim)
         )
 
         # Hidden layers
         for i in range(self.parameters.hidden_count):
-            graph.add(
+            self.graph.add(
                 tf.keras.layers.Bidirectional(
                     self.base_layer(True if i < self.parameters.hidden_count - 1 else False)))
 
         # Output layer
-        graph.add(
+        self.graph.add(
             tf.keras.layers.Dense(
-                self.output_dim,
+                2,
                 activation="sigmoid",
             )
         )
 
-        # Oh my, thank you Guido for this nice looking switch statement ! Yikes.
-        # Optimizer
-        if self.parameters.optimizer == 0:
-            optimizer = tf.optimizers.SGD(learning_rate=self.parameters.learning_rate)
-        elif self.parameters.optimizer == 1:
-            optimizer = tf.optimizers.Adam(learning_rate=self.parameters.learning_rate)
-        elif self.parameters.optimizer == 2:
-            optimizer = tf.optimizers.Adadelta(learning_rate=self.parameters.learning_rate)
-        elif self.parameters.optimizer == 3:
-            optimizer = tf.optimizers.RMSprop(learning_rate=self.parameters.learning_rate)
-        else:
-            raise KeyError("Wrong value for graph parameter optimizer : " + str(self.parameters.optimizer))
-
-        graph.compile(
-            optimizer=optimizer,
-            loss="binary_crossentropy",
-            metrics=['accuracy']
+        self.graph.compile(
+            optimizer=optimizer(learning_rate=self.parameters.learning_rate),
+            loss=self.parameters.loss,
+            metrics=metrics
         )
-
-        return graph
 
     def base_layer(self, return_sequences):
         return tf.keras.layers.GRU(
@@ -66,4 +87,77 @@ class MalwareDetectionModel:
             recurrent_regularizer=tf.keras.regularizers.l1_l2(
                 l1=self.parameters.recurrent_l1,
                 l2=self.parameters.recurrent_l2)
+        )
+
+
+class UNetModel(Model):
+    def __init__(self, params):
+        super().__init__(params)
+
+    def build(self, optimizer):
+        """
+        Model found on:
+        https://github.com/AlirezaShamsoshoara/Fire-Detection-UAV-Aerial-Image-Classification-Segmentation-UnmannedAerialVehicle
+        This function returns a U-Net Model for this binary fire segmentation images:
+        Arxiv Link for U-Net: https://arxiv.org/abs/1505.04597
+        """
+        inputs = Input(self.parameters.input_dim)
+        s = Lambda(lambda x: x / 255)(inputs)
+
+        c1 = Conv2D(16, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(s)
+        c1 = Dropout(0.1)(c1)
+        c1 = Conv2D(16, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(c1)
+        p1 = MaxPooling2D((2, 2))(c1)
+
+        c2 = Conv2D(32, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(p1)
+        c2 = Dropout(0.1)(c2)
+        c2 = Conv2D(32, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(c2)
+        p2 = MaxPooling2D((2, 2))(c2)
+
+        c3 = Conv2D(64, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(p2)
+        c3 = Dropout(0.2)(c3)
+        c3 = Conv2D(64, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(c3)
+        p3 = MaxPooling2D((2, 2))(c3)
+
+        c4 = Conv2D(128, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(p3)
+        c4 = Dropout(0.2)(c4)
+        c4 = Conv2D(128, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(c4)
+        p4 = MaxPooling2D(pool_size=(2, 2))(c4)
+
+        c5 = Conv2D(256, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(p4)
+        c5 = Dropout(0.3)(c5)
+        c5 = Conv2D(256, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(c5)
+
+        u6 = Conv2DTranspose(128, (2, 2), strides=(2, 2), padding='same')(c5)
+        u6 = concatenate([u6, c4])
+        c6 = Conv2D(128, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(u6)
+        c6 = Dropout(0.2)(c6)
+        c6 = Conv2D(128, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(c6)
+
+        u7 = Conv2DTranspose(64, (2, 2), strides=(2, 2), padding='same')(c6)
+        u7 = concatenate([u7, c3])
+        c7 = Conv2D(64, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(u7)
+        c7 = Dropout(0.2)(c7)
+        c7 = Conv2D(64, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(c7)
+
+        u8 = Conv2DTranspose(32, (2, 2), strides=(2, 2), padding='same')(c7)
+        u8 = concatenate([u8, c2])
+        c8 = Conv2D(32, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(u8)
+        c8 = Dropout(0.1)(c8)
+        c8 = Conv2D(32, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(c8)
+
+        u9 = Conv2DTranspose(16, (2, 2), strides=(2, 2), padding='same')(c8)
+        u9 = concatenate([u9, c1], axis=3)
+        c9 = Conv2D(16, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(u9)
+        c9 = Dropout(0.1)(c9)
+        c9 = Conv2D(16, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(c9)
+
+        outputs = Conv2D(1, (1, 1), activation='sigmoid')(c9)
+
+        self.graph = tf.keras.Model(inputs=[inputs], outputs=[outputs])
+
+        self.graph.compile(
+            optimizer=optimizer(learning_rate=self.parameters.learning_rate),
+            loss=self.parameters.loss,
+            metrics=metrics
         )
