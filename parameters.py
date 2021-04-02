@@ -21,22 +21,7 @@ class Parameters:
         self.input_dim = (200, 200)
 
     def to_dict(self):
-        return {
-            "epochs": self.epochs,
-            "batch_size": self.batch_size,
-            "hidden_count": self.hidden_count,
-            "optimizer": self.optimizer,
-            "learning_rate": self.learning_rate,
-            "units": self.units,
-            "dropout": self.dropout,
-            "recurrent_dropout": self.recurrent_dropout,
-            "bias_l1": self.bias_l1,
-            "bias_l2": self.bias_l2,
-            "recurrent_l1": self.recurrent_l1,
-            "recurrent_l2": self.recurrent_l2,
-            "loss": self.loss,
-            "input_dim": self.input_dim
-        }
+        return self.__dict__
 
     def save(self, name=None):
         if name is None:
@@ -50,39 +35,9 @@ class Parameters:
         with open(f'parameters/{name}.json', 'r') as fp:
             data = json.load(fp)
             output = Parameters()
-            output.seq_size = data["seq_size"]
-            output.epochs = data["epochs"]
-            output.batch_size = data["batch_size"]
-            output.hidden_count = data["hidden_count"]
-            output.optimizer = data["optimizer"]
-            output.learning_rate = data["learning_rate"]
-            output.units = data["units"]
-            output.dropout = data["dropout"]
-            output.recurrent_dropout = data["recurrent_dropout"]
-            output.bias_l1 = data["bias_l1"]
-            output.bias_l2 = data["bias_l2"]
-            output.recurrent_l1 = data["recurrent_l1"]
-            output.recurrent_l2 = data["recurrent_l2"]
-            output.loss = data["loss"]
-            output.input_dim = data["input_dim"]
+            for key in output.__dict__.keys():
+                setattr(output, key, data[key]) 
             return output
 
-    @staticmethod
-    def get_keys():
-        return [
-            "seq_size",
-            "epochs",
-            "batch_size",
-            "hidden_count",
-            "optimizer",
-            "learning_rate",
-            "units",
-            "dropout",
-            "recurrent_dropout",
-            "bias_l1",
-            "bias_l2",
-            "recurrent_l1",
-            "recurrent_l2",
-            "loss",
-            "input_dim"
-        ]
+    def get_keys(self):
+        return self.__dict__.keys()

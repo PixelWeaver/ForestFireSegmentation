@@ -12,7 +12,7 @@ class MetricWriter:
 
     def write(self, m, p):
         if self.file is None:
-            self.headers = list(m.keys()) + list(Parameters.get_keys())
+            self.headers = list(m.keys()) + list(p.get_keys())
             self.file = open("results.csv", "w")
             self.writer = csv.DictWriter(self.file, fieldnames=self.headers)
             if self.should_write_header:
