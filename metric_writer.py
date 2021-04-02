@@ -1,6 +1,5 @@
 import csv
 import os
-from parameters import Parameters
 
 
 class MetricWriter:
