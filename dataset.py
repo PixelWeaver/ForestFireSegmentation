@@ -5,15 +5,19 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import os
 import numpy as np
+from parameters import Parameters
+import math
 
 
-def strip(st):
+def strip(st : str):
     return st.strip().replace('"', "")
 
 
 class Dataset:
-    def __init__(self):
-        pass
+    def __init__(self, parameters: Parameters):
+        Dataset.ensure_dirs_exist()
+        Dataset.ensure_sqlite_db_exists()
+        self.params = parameters        
 
     @staticmethod
     def generate_rgb_split():
@@ -56,7 +60,7 @@ class Dataset:
         df["resolution"] = df.apply(lambda row: int(row["width"]) * int(row["height"]), axis=1)
         df["size_string"] = df.apply(lambda row: f'{row["width"]}x{row["height"]}', axis=1)
 
-        # sort/count dataframe
+        # Sort/count dataframe
         sorted_df = df.sort_values(by=['resolution', 'size_string'], ascending=[True, True])
         counted_df = sorted_df.groupby(['size_string', 'resolution'], sort=False, as_index=False)["size_string"]\
             .agg(['count'])
@@ -73,3 +77,52 @@ class Dataset:
         plt.savefig("figures/dataset_img_size_top10")
         plt.show()
 
+    @staticmethod
+    def ensure_dirs_exist():
+        dir_list = [
+            "dataset",
+            "dataset/img",
+            "dataset/gt",
+            "dataset/nir"
+        ]
+
+        for path in dir_list:
+            if not os.path.isdir(path):
+                os.mkdir(path)
+
+    @staticmethod
+    def ensure_sqlite_db_exists():
+        return
+
+    def crop_picture(self, path : str, gt_path : str, nir_path : str):
+        # Read all images
+        im = cv2.imread(path)
+        gt_im = cv2.imread(gt_path)
+        if nir_path is not None:
+            im_nir = cv2.imread(nir_path)
+
+        # Consistency checks
+        if path == gt_path or gt_path == nir_path or nir_path == path:
+            raise Exception("Duplicate image path entry")
+
+        dimension_match = im.shape[0:1] == gt_im.shape[0:1]
+        if nir_path is not None:
+            dimension_match = dimension_match & gt_im.shape[0:1] == im_nir.shape[0:1]
+        if not dimension_match:
+            raise Exception("Image dimension mismatch")
+
+        # Crop
+        width, height = im.shape[1], im.shape[0]
+        target_w, target_h = self.params.input_dim
+
+        w_steps = math.floor((width - target_w)/self.params.crop_step)
+        h_steps = math.floor((height - target_h)/self.params.crop_step)
+        for i in range(0, w_steps):
+            for j in range(0, h_steps):
+                h_start, w_start = (i, j) * self.params.crop_step
+
+                cropped = img[h_start:h_start+target_h, w_start:w_start+target_w]
+                cropped_gt = gt_im[h_start:h_start+target_h, w_start:w_start+target_w]
+
+                if nir_path is not None:
+                    cropped_nir = nir_path[h_start:h_start+target_h, w_start:w_start+target_w]

@@ -19,6 +19,7 @@ class Parameters:
         self.recurrent_l2 = random.choice([0, 0.01, 0.02])
         self.loss = "binary_crossentropy"
         self.input_dim = (200, 200)
+        self.crop_step = 100
 
     def to_dict(self):
         return self.__dict__
