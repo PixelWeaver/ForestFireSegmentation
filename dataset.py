@@ -2,13 +2,13 @@ import seaborn as sns
 import cv2
 import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.model_selection import train_test_split
 import os
 import numpy as np
 from parameters import Parameters
 import math
 import sqlite3
 from tqdm import tqdm
+import random
 
 
 def strip(st : str):
@@ -23,33 +23,6 @@ class Dataset:
 
         Dataset.ensure_dirs_exist()
         self.init_db_if_required()
-
-    @staticmethod
-    def generate_rgb_split():
-        metadata_df = pd.read_csv('corsican_fire_db/bdfire/data.csv')
-
-        # Push every input image name in a list
-        X = []
-        for i, row in metadata_df.iterrows():
-            X.append(strip(row[' "photo"']))
-
-        # Push every output (GT) image name in a list
-        y = []
-        for i, row in metadata_df.iterrows():
-            y.append(strip(row[' "verite_terrain"']))
-
-        # Split & shuffle it
-        # random_state for reproducibility
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1319181)
-        X_test, X_val, y_test, y_val = train_test_split(X_test, y_test, test_size=0.5, random_state=1319181)
-
-        if not os.path.isdir("split"):
-            os.mkdir("split")
-
-        np.savez_compressed("split/train.npz", X=X_train, y=y_train)
-        np.savez_compressed("split/val.npz", X=X_val, y=y_val)
-        np.savez_compressed("split/test.npz", X=X_test, y=y_test)
-        print(f'Splits generated')
 
     @staticmethod
     def print_cdfb_statistics():
@@ -109,7 +82,8 @@ class Dataset:
                                 name TEXT,
                                 nir INTEGER,
                                 seq INTEGER,
-                                fire INTEGER)''')
+                                fire INTEGER,
+                                split INTEGER)''')
             print("SQLite database initialized")
 
     def generate_std_dataset(self):
@@ -123,7 +97,23 @@ class Dataset:
 
             self.derive_samples_from_picture(rgb_path, gt_path, nir_path, row['Id'], row[' "sequence"'])
         
-        print("Done!")
+    def generate_split(self):
+        negative_samples = list(map(lambda r : r[0], self.con.execute("SELECT rowid FROM data_entries WHERE fire = 0")))
+        positive_samples = list(map(lambda r : r[0], self.con.execute("SELECT rowid FROM data_entries WHERE fire = 1")))
+        
+        rdEngine = random.Random(1319181)
+        rdEngine.shuffle(negative_samples)
+        rdEngine.shuffle(positive_samples)
+
+        train = negative_samples[:math.ceil(len(negative_samples) * 0.7)] + positive_samples[:math.ceil(len(positive_samples) * 0.7)]
+        val = negative_samples[math.ceil(len(negative_samples) * 0.7):math.ceil(len(negative_samples) * 0.85)] +\
+                positive_samples[math.ceil(len(positive_samples) * 0.7):math.ceil(len(positive_samples) * 0.85)]
+        test = negative_samples[math.ceil(len(negative_samples) * 0.85):] + positive_samples[math.ceil(len(positive_samples) * 0.85):]
+
+        self.cur.executemany("UPDATE data_entries SET split = 0 WHERE rowid = ?", zip(iter(train)))
+        self.cur.executemany("UPDATE data_entries SET split = 1 WHERE rowid = ?", zip(iter(val)))
+        self.cur.executemany("UPDATE data_entries SET split = 2 WHERE rowid = ?", zip(iter(test)))
+        self.con.commit()
             
     def add_to_dataset(self, img, gt, nir, name : str, seq : int):
         cv2.imwrite(f"dataset/img/{name}.png", img)
