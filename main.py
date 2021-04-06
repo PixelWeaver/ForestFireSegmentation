@@ -1,7 +1,10 @@
 from dataset import Dataset
+from parameters import Parameters
 from utils import *
 
 if __name__ == '__main__':
     # Dataset.generate_rgb_split()
-    print(get_venn_circle_height(1135))
+    p = Parameters()
+    d = Dataset(p)
+    d.generate_std_dataset()
 
