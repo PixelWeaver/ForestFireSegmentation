@@ -116,8 +116,6 @@ class Dataset:
         metadata_df = pd.read_csv('corsican_fire_db/bdfire/data.csv')
         print("Now deriving samples from images...")
         for i, row in tqdm(metadata_df.iterrows(), total=metadata_df.shape[0]):
-            if i < 636:
-                continue
             rgb_path = 'corsican_fire_db/' + strip(row[' "photo"'])
             gt_path = 'corsican_fire_db/' + strip(row[' "verite_terrain"'])
             nir_filename = strip(row[' "photo_IR"'])
