@@ -6,7 +6,7 @@ import gc
 from sklearn.metrics import f1_score, accuracy_score
 from parameters import Parameters
 from dataset import Dataset
-from model import Model
+from models import Model
 from metric_writer import MetricWriter
 
 # Just disables the warning, doesn't enable AVX/FMA

@@ -6,5 +6,5 @@ if __name__ == '__main__':
     # Dataset.generate_rgb_split()
     p = Parameters()
     d = Dataset(p)
-    d.generate_split()
+    d.cp_discarded_samples(10)
 

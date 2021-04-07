@@ -3,12 +3,12 @@ import cv2
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
-import numpy as np
 from parameters import Parameters
 import math
 import sqlite3
 from tqdm import tqdm
 import random
+import shutil
 
 
 def strip(st : str):
@@ -61,12 +61,47 @@ class Dataset:
             "dataset",
             "dataset/img",
             "dataset/gt",
-            "dataset/nir"
+            "dataset/nir",
+            "discarded"
         ]
 
         for path in dir_list:
             if not os.path.isdir(path):
                 os.mkdir(path)
+
+    def cp_discarded_samples(self, lower_bound):
+        samples = list(self.cur.execute(f"SELECT rowid, name FROM data_entries WHERE fire_pixels > 0 AND fire_pixels < {lower_bound}"))
+        print(f"{len(samples)} samples would be discarded")
+        for i, sample in enumerate(samples):
+            path, _, _ = Dataset.paths_from_name(sample[1])
+            shutil.copy(path, f"discarded/{i}.png")
+
+    @staticmethod
+    def paths_from_name(name):
+        return (
+            f"dataset/img/{name}.png",
+            f"dataset/gt/{name}.png",
+            f"dataset/nir/{name}.png"
+        )
+
+    def count_fire_pixels(self):
+        samples = list(self.cur.execute("SELECT rowid, name FROM data_entries"))
+        
+        for sample in tqdm(samples):
+            _, gt_path, _ = Dataset.paths_from_name(sample[1])
+            im = cv2.imread(gt_path)
+            fpixels = cv2.countNonZero(cv2.cvtColor(im, cv2.COLOR_BGR2GRAY))
+            
+            self.cur.execute(f"UPDATE data_entries SET fire_pixels = {fpixels} WHERE rowid = {sample[0]}")
+        self.con.commit()
+
+    def print_firepixel_distribution(self):
+        df = pd.read_sql_query("SELECT fire_pixels FROM data_entries", self.con)
+        sns.displot(x="fire_pixels", data=df, kind="ecdf")
+        plt.tight_layout()
+        plt.savefig("figures/dataset_firepixels_repartition")
+        plt.show()
+
 
     def init_db_if_required(self):
         init_required = False
@@ -82,6 +117,7 @@ class Dataset:
                                 name TEXT,
                                 nir INTEGER,
                                 seq INTEGER,
+                                fire_pixels INTEGER,
                                 fire INTEGER,
                                 split INTEGER)''')
             print("SQLite database initialized")
@@ -98,8 +134,8 @@ class Dataset:
             self.derive_samples_from_picture(rgb_path, gt_path, nir_path, row['Id'], row[' "sequence"'])
         
     def generate_split(self):
-        negative_samples = list(map(lambda r : r[0], self.con.execute("SELECT rowid FROM data_entries WHERE fire = 0")))
-        positive_samples = list(map(lambda r : r[0], self.con.execute("SELECT rowid FROM data_entries WHERE fire = 1")))
+        negative_samples = list(map(lambda r : r[0], self.cur.execute("SELECT rowid FROM data_entries WHERE fire = 0")))
+        positive_samples = list(map(lambda r : r[0], self.cur.execute("SELECT rowid FROM data_entries WHERE fire = 1")))
         
         rdEngine = random.Random(1319181)
         rdEngine.shuffle(negative_samples)
