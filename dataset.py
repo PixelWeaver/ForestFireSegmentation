@@ -9,6 +9,7 @@ import sqlite3
 from tqdm import tqdm
 import random
 import shutil
+import numpy as np
 
 
 def strip(st : str):
@@ -150,6 +151,35 @@ class Dataset:
         self.cur.executemany("UPDATE data_entries SET split = 1 WHERE rowid = ?", zip(iter(val)))
         self.cur.executemany("UPDATE data_entries SET split = 2 WHERE rowid = ?", zip(iter(test)))
         self.con.commit()
+
+    @staticmethod
+    def load_row(row):
+        rgb_path, gt_path, nir_path = Dataset.paths_from_name(row[1])
+
+        nir_im = None
+        if nir_path is not None:
+            nir_im = cv2.imread(nir_path)
+
+        return cv2.imread(rgb_path), np.expand_dims(cv2.imread(gt_path, flags=cv2.IMREAD_GRAYSCALE), axis=2), nir_im 
+
+    def get_reduced_dataset(self):
+        x_shape = (200, self.params.input_dim[0], self.params.input_dim[1], 3)
+        y_shape = (200, self.params.input_dim[0], self.params.input_dim[1], 1)
+        X_train, y_train, X_val, y_val = np.zeros(x_shape), np.zeros(y_shape), np.zeros(x_shape), np.zeros(y_shape)
+
+        train_rows = list(self.con.execute("SELECT * FROM data_entries WHERE split = 0"))[:200] # training
+        val_rows = list(self.con.execute("SELECT * FROM data_entries WHERE split = 1"))[:200] # val
+
+        for i in range(200):
+            rgb, gt, _ = Dataset.load_row(train_rows[i])
+            X_train[i] = rgb
+            y_train[i] = gt
+
+            rgb, gt, _ = Dataset.load_row(val_rows[i])
+            X_val[i] = rgb
+            y_val[i] = gt
+
+        return X_train, y_train, X_val, y_val 
             
     def add_to_dataset(self, img, gt, nir, name : str, seq : int):
         cv2.imwrite(f"dataset/img/{name}.png", img)

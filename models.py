@@ -29,7 +29,6 @@ class Model:
         pass
 
     def train(self, x_train, y_train, x_val, y_val):
-        self.graph = tf.keras.Model
         self.graph.fit(x_train, y_train,
                        self.parameters.batch_size,
                        self.parameters.epochs,
@@ -101,7 +100,7 @@ class UNetModel(Model):
         This function returns a U-Net Model for this binary fire segmentation images:
         Arxiv Link for U-Net: https://arxiv.org/abs/1505.04597
         """
-        inputs = Input(self.parameters.input_dim)
+        inputs = Input((self.parameters.input_dim[0], self.parameters.input_dim[1], 3))
         s = Lambda(lambda x: x / 255)(inputs)
 
         c1 = Conv2D(16, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(s)
