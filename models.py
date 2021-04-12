@@ -1,7 +1,10 @@
 import abc
 from abc import abstractmethod
+from numpy.lib.npyio import save
 import tensorflow as tf
 from tensorflow.keras.layers import *
+import json
+
 
 metrics = [
     tf.keras.metrics.AUC(name='auc'),
@@ -23,16 +26,21 @@ class Model:
     def __init__(self, params):
         self.parameters = params
         self.graph = None
+        self.history = None
 
     @abstractmethod
     def build(self, optimizer):
         pass
 
-    def train(self, x_train, y_train, x_val, y_val):
-        self.graph.fit(x_train, y_train,
+    def train(self, x_train, y_train, x_val, y_val, save_history=True):
+        self.history = self.graph.fit(x_train, y_train,
                        self.parameters.batch_size,
                        self.parameters.epochs,
                        validation_data=(x_val, y_val))
+
+        if save_history:
+            with open(f'histories/{self.parameters.name}.json', 'w') as file:
+                json.dump(self.history.history, file)
 
     def test(self, x_test, y_test):
         pass  # Do not implement/use before testing all architectures
