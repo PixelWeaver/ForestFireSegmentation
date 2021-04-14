@@ -77,7 +77,7 @@ class Dataset:
             path, _, _ = Dataset.paths_from_name(sample[1])
             shutil.copy(path, f"discarded/{i}.png")
 
-    @staticmethod
+    @staticmethod   
     def paths_from_name(name):
         return (
             f"dataset/img/{name}.png",
@@ -136,7 +136,7 @@ class Dataset:
         
     def generate_split(self):
         negative_samples = list(map(lambda r : r[0], self.cur.execute("SELECT rowid FROM data_entries WHERE fire = 0")))
-        positive_samples = list(map(lambda r : r[0], self.cur.execute("SELECT rowid FROM data_entries WHERE fire = 1")))
+        positive_samples = list(map(lambda r : r[0], self.cur.execute("SELECT rowid FROM data_entries WHERE fire_pixels > 19")))
         
         rdEngine = random.Random(1319181)
         rdEngine.shuffle(negative_samples)
@@ -176,6 +176,29 @@ class Dataset:
             y_train[i] = gt
 
             rgb, gt, _ = Dataset.load_row(val_rows[i])
+            X_val[i] = rgb
+            y_val[i] = gt
+
+        return X_train, y_train, X_val, y_val 
+
+    def get_full_dataset(self):
+        train_rows = list(self.con.execute("SELECT * FROM data_entries WHERE split = 0")) # training
+        val_rows = list(self.con.execute("SELECT * FROM data_entries WHERE split = 1")) # val
+
+        x_shape = (len(train_rows), self.params.input_dim[0], self.params.input_dim[1], 3)
+        y_shape = (len(train_rows), self.params.input_dim[0], self.params.input_dim[1], 1)
+        x_val_shape = (len(val_rows), self.params.input_dim[0], self.params.input_dim[1], 3)
+        y_val_shape = (len(val_rows), self.params.input_dim[0], self.params.input_dim[1], 1)
+
+        X_train, y_train, X_val, y_val = np.zeros(x_shape), np.zeros(y_shape), np.zeros(x_val_shape), np.zeros(y_val_shape)
+
+        for i, row in enumerate(train_rows):
+            rgb, gt, _ = Dataset.load_row(row)
+            X_train[i] = rgb
+            y_train[i] = gt
+
+        for row in val_rows:
+            rgb, gt, _ = Dataset.load_row(row)
             X_val[i] = rgb
             y_val[i] = gt
 
