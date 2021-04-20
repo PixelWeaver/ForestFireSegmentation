@@ -11,4 +11,4 @@ if __name__ == '__main__':
     #d.generate_split()
     m = UNetModel(p)
     m.build(tf.keras.optimizers.Adam)
-    m.train(*d.get_reduced_dataset())
+    m.train(d)

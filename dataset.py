@@ -3,6 +3,7 @@ import cv2
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
+from tensorflow.python.framework import dtypes
 from parameters import Parameters
 import math
 import sqlite3
@@ -10,6 +11,8 @@ from tqdm import tqdm
 import random
 import shutil
 import numpy as np
+import tensorflow as tf
+import tensorflow.keras.backend as K
 
 
 def strip(st : str):
@@ -17,13 +20,25 @@ def strip(st : str):
 
 
 class Dataset:
+    # Class variables
+    r_seed = 1319181 # Fixed seed to ensure reproducibility
+
     def __init__(self, parameters: Parameters):
         self.params = parameters
         self.con = None
         self.cur = None
 
-        Dataset.ensure_dirs_exist()
-        self.init_db_if_required()
+        Dataset._ensure_dirs_exist()
+        self._init_db_if_required()
+
+        self.train_rows = list(self.con.execute("SELECT * FROM data_entries WHERE split = 0")) # training
+        self.val_rows = list(self.con.execute("SELECT * FROM data_entries WHERE split = 1")) # validation
+        self.test_rows = list(self.con.execute("SELECT * FROM data_entries WHERE split = 2")) # test
+
+        rdEngine = random.Random(Dataset.r_seed)
+        rdEngine.shuffle(self.train_rows)
+        rdEngine.shuffle(self.val_rows)
+        rdEngine.shuffle(self.test_rows)
 
     @staticmethod
     def print_cdfb_statistics():
@@ -57,7 +72,7 @@ class Dataset:
         plt.show()
 
     @staticmethod
-    def ensure_dirs_exist():
+    def _ensure_dirs_exist():
         dir_list = [
             "dataset",
             "dataset/img",
@@ -74,11 +89,11 @@ class Dataset:
         samples = list(self.cur.execute(f"SELECT rowid, name FROM data_entries WHERE fire_pixels > 0 AND fire_pixels < {lower_bound}"))
         print(f"{len(samples)} samples would be discarded")
         for i, sample in enumerate(samples):
-            path, _, _ = Dataset.paths_from_name(sample[1])
+            path, _, _ = Dataset._paths_from_name(sample[1])
             shutil.copy(path, f"discarded/{i}.png")
 
     @staticmethod   
-    def paths_from_name(name):
+    def _paths_from_name(name):
         return (
             f"dataset/img/{name}.png",
             f"dataset/gt/{name}.png",
@@ -89,7 +104,7 @@ class Dataset:
         samples = list(self.cur.execute("SELECT rowid, name FROM data_entries"))
         
         for sample in tqdm(samples):
-            _, gt_path, _ = Dataset.paths_from_name(sample[1])
+            _, gt_path, _ = Dataset._paths_from_name(sample[1])
             im = cv2.imread(gt_path)
             fpixels = cv2.countNonZero(cv2.cvtColor(im, cv2.COLOR_BGR2GRAY))
             
@@ -104,7 +119,7 @@ class Dataset:
         plt.show()
 
 
-    def init_db_if_required(self):
+    def _init_db_if_required(self):
         init_required = False
         if not os.path.isfile("dataset/index.db"):
             init_required = True
@@ -123,7 +138,10 @@ class Dataset:
                                 split INTEGER)''')
             print("SQLite database initialized")
 
-    def generate_std_dataset(self):
+            self._generate_std_dataset()
+            self._generate_split()
+
+    def _generate_std_dataset(self):
         metadata_df = pd.read_csv('corsican_fire_db/bdfire/data.csv')
         print("Now deriving samples from images...")
         for i, row in tqdm(metadata_df.iterrows(), total=metadata_df.shape[0]):
@@ -132,13 +150,13 @@ class Dataset:
             nir_filename = strip(row[' "photo_IR"'])
             nir_path = None if len(nir_filename) == 0 else 'corsican_fire_db/' + strip(row[' "photo_IR"'])
 
-            self.derive_samples_from_picture(rgb_path, gt_path, nir_path, row['Id'], row[' "sequence"'])
+            self._derive_samples_from_picture(rgb_path, gt_path, nir_path, row['Id'], row[' "sequence"'])
         
-    def generate_split(self):
+    def _generate_split(self):
         negative_samples = list(map(lambda r : r[0], self.cur.execute("SELECT rowid FROM data_entries WHERE fire = 0")))
         positive_samples = list(map(lambda r : r[0], self.cur.execute("SELECT rowid FROM data_entries WHERE fire_pixels > 19")))
         
-        rdEngine = random.Random(1319181)
+        rdEngine = random.Random(Dataset.r_seed)
         rdEngine.shuffle(negative_samples)
         rdEngine.shuffle(positive_samples)
 
@@ -153,8 +171,8 @@ class Dataset:
         self.con.commit()
 
     @staticmethod
-    def load_row(row):
-        rgb_path, gt_path, nir_path = Dataset.paths_from_name(row[1])
+    def _load_row(row):
+        rgb_path, gt_path, nir_path = Dataset._paths_from_name(row[1])
 
         nir_im = None
         if nir_path is not None:
@@ -171,40 +189,55 @@ class Dataset:
         val_rows = list(self.con.execute("SELECT * FROM data_entries WHERE split = 1"))[:200] # val
 
         for i in range(200):
-            rgb, gt, _ = Dataset.load_row(train_rows[i])
+            rgb, gt, _ = Dataset._load_row(train_rows[i])
             X_train[i] = rgb
             y_train[i] = gt
 
-            rgb, gt, _ = Dataset.load_row(val_rows[i])
+            rgb, gt, _ = Dataset._load_row(val_rows[i])
             X_val[i] = rgb
             y_val[i] = gt
 
         return X_train, y_train, X_val, y_val 
 
-    def get_full_dataset(self):
-        train_rows = list(self.con.execute("SELECT * FROM data_entries WHERE split = 0")) # training
-        val_rows = list(self.con.execute("SELECT * FROM data_entries WHERE split = 1")) # val
+    def train_set_size(self):
+        return list(self.con.execute("SELECT COUNT(*) FROM data_entries WHERE split = 0"))[0][0]
 
-        x_shape = (len(train_rows), self.params.input_dim[0], self.params.input_dim[1], 3)
-        y_shape = (len(train_rows), self.params.input_dim[0], self.params.input_dim[1], 1)
-        x_val_shape = (len(val_rows), self.params.input_dim[0], self.params.input_dim[1], 3)
-        y_val_shape = (len(val_rows), self.params.input_dim[0], self.params.input_dim[1], 1)
+    def _train_gen(self):
+        for row in self.train_rows:
+            rgb, gt, _ = Dataset._load_row(row)
+            rgb = tf.expand_dims(rgb, axis=0)
+            gt = tf.expand_dims(gt, axis=0)
+            yield rgb, gt
 
-        X_train, y_train, X_val, y_val = np.zeros(x_shape), np.zeros(y_shape), np.zeros(x_val_shape), np.zeros(y_val_shape)
+    def get_train_ds(self):
+        ds = tf.data.Dataset.from_generator(
+            self._train_gen, 
+            output_types=(dtypes.uint16, dtypes.uint16), 
+            output_shapes=(
+                (1, self.params.input_dim[0], self.params.input_dim[1], 3), # Input dimension
+                (1, self.params.input_dim[0], self.params.input_dim[1], 1) # Output dimension
+            ))
 
-        for i, row in enumerate(train_rows):
-            rgb, gt, _ = Dataset.load_row(row)
-            X_train[i] = rgb
-            y_train[i] = gt
+        return ds
+
+    def _val_gen(self):
+        val_rows = list(self.con.execute("SELECT * FROM data_entries WHERE split = 1")) # validation
+        rdEngine = random.Random(Dataset.r_seed)
+        rdEngine.shuffle(val_rows)
 
         for row in val_rows:
-            rgb, gt, _ = Dataset.load_row(row)
-            X_val[i] = rgb
-            y_val[i] = gt
+            rgb, gt, _ = Dataset._load_row(row)
+            yield rgb, gt
 
-        return X_train, y_train, X_val, y_val 
+    def get_val_ds(self):
+        ds = tf.data.Dataset.from_generator(
+            self._train_gen, 
+            output_types=(dtypes.uint16, dtypes.uint16), 
+            output_shapes=((self.params.input_dim[0], self.params.input_dim[1], 3), (self.params.input_dim[0], self.params.input_dim[1], 1)))
+
+        return ds
             
-    def add_to_dataset(self, img, gt, nir, name : str, seq : int):
+    def _add_to_dataset(self, img, gt, nir, name : str, seq : int):
         cv2.imwrite(f"dataset/img/{name}.png", img)
         cv2.imwrite(f"dataset/gt/{name}.png", gt)
         if nir is not None:
@@ -214,7 +247,7 @@ class Dataset:
                         (name, 0 if nir is None else 1, seq, 1 if cv2.countNonZero(cv2.cvtColor(gt, cv2.COLOR_BGR2GRAY)) else 0))
         self.con.commit()
 
-    def derive_samples_from_picture(self, path : str, gt_path : str, nir_path : str, pic_id : str, seq: int):
+    def _derive_samples_from_picture(self, path : str, gt_path : str, nir_path : str, pic_id : str, seq: int):
         # Read all images
         im = cv2.imread(path)
         gt_im = cv2.imread(gt_path)
@@ -245,5 +278,5 @@ class Dataset:
                 cropped_gt = gt_im[h_start:h_start+target_h, w_start:w_start+target_w]
                 cropped_nir = None if nir_path is None else nir_im[h_start:h_start+target_h, w_start:w_start+target_w]
 
-                self.add_to_dataset(cropped, cropped_gt, cropped_nir, f"{pic_id}_{i}_{j}", seq)
+                self._add_to_dataset(cropped, cropped_gt, cropped_nir, f"{pic_id}_{i}_{j}", seq)
                 

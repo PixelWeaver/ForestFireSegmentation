@@ -1,9 +1,11 @@
 import abc
 from abc import abstractmethod
-from numpy.lib.npyio import save
+import math
+from parameters import Parameters
 import tensorflow as tf
 from tensorflow.keras.layers import *
 import json
+from dataset import Dataset
 
 
 metrics = [
@@ -32,11 +34,13 @@ class Model:
     def build(self, optimizer):
         pass
 
-    def train(self, x_train, y_train, x_val, y_val, save_history=True):
-        self.history = self.graph.fit(x_train, y_train,
-                       self.parameters.batch_size,
-                       self.parameters.epochs,
-                       validation_data=(x_val, y_val))
+    def train(self, dataset : Dataset, save_history=True):
+        self.history = self.graph.fit(
+            dataset.get_train_ds().__iter__(),
+            steps_per_epoch=math.ceil(dataset.train_set_size() / self.parameters.batch_size),
+            epochs=self.parameters.epochs,
+            validation_data=dataset.get_val_ds().__iter__()
+        )
 
         if save_history:
             with open(f'histories/{self.parameters.name}.json', 'w') as file:
