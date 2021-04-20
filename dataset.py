@@ -100,7 +100,7 @@ class Dataset:
             f"dataset/nir/{name}.png"
         )
 
-    def count_fire_pixels(self):
+    def _count_fire_pixels(self):
         samples = list(self.cur.execute("SELECT rowid, name FROM data_entries"))
         
         for sample in tqdm(samples):
@@ -139,6 +139,7 @@ class Dataset:
             print("SQLite database initialized")
 
             self._generate_std_dataset()
+            self._count_fire_pixels()
             self._generate_split()
 
     def _generate_std_dataset(self):
@@ -153,17 +154,16 @@ class Dataset:
             self._derive_samples_from_picture(rgb_path, gt_path, nir_path, row['Id'], row[' "sequence"'])
         
     def _generate_split(self):
-        negative_samples = list(map(lambda r : r[0], self.cur.execute("SELECT rowid FROM data_entries WHERE fire = 0")))
+        # negative_samples = list(map(lambda r : r[0], self.cur.execute("SELECT rowid FROM data_entries WHERE fire = 0")))
+        # Only include positive samples for segmentation
         positive_samples = list(map(lambda r : r[0], self.cur.execute("SELECT rowid FROM data_entries WHERE fire_pixels > 19")))
         
         rdEngine = random.Random(Dataset.r_seed)
-        rdEngine.shuffle(negative_samples)
         rdEngine.shuffle(positive_samples)
 
-        train = negative_samples[:math.ceil(len(negative_samples) * 0.7)] + positive_samples[:math.ceil(len(positive_samples) * 0.7)]
-        val = negative_samples[math.ceil(len(negative_samples) * 0.7):math.ceil(len(negative_samples) * 0.85)] +\
-                positive_samples[math.ceil(len(positive_samples) * 0.7):math.ceil(len(positive_samples) * 0.85)]
-        test = negative_samples[math.ceil(len(negative_samples) * 0.85):] + positive_samples[math.ceil(len(positive_samples) * 0.85):]
+        train = positive_samples[:math.ceil(len(positive_samples) * 0.7)]
+        val = positive_samples[math.ceil(len(positive_samples) * 0.7):math.ceil(len(positive_samples) * 0.85)]
+        test = positive_samples[math.ceil(len(positive_samples) * 0.85):]
 
         self.cur.executemany("UPDATE data_entries SET split = 0 WHERE rowid = ?", zip(iter(train)))
         self.cur.executemany("UPDATE data_entries SET split = 1 WHERE rowid = ?", zip(iter(val)))
