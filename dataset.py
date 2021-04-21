@@ -205,8 +205,8 @@ class Dataset:
     def _train_gen(self):
         for row in self.train_rows:
             rgb, gt, _ = Dataset._load_row(row)
-            rgb = tf.expand_dims(rgb, axis=0)
-            gt = tf.expand_dims(gt, axis=0)
+            rgb = tf.expand_dims(rgb, 0)
+            gt = tf.expand_dims(gt, 0)
             yield rgb, gt
 
     def get_train_ds(self):
