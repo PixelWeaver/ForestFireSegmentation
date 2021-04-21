@@ -231,7 +231,7 @@ class Dataset:
 
     def get_val_ds(self):
         ds = tf.data.Dataset.from_generator(
-            self._train_gen, 
+            self._val_gen, 
             output_types=(dtypes.uint16, dtypes.uint16), 
             output_shapes=((self.params.input_dim[0], self.params.input_dim[1], 3), (self.params.input_dim[0], self.params.input_dim[1], 1)))
 
