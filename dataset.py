@@ -221,11 +221,7 @@ class Dataset:
         return ds
 
     def _val_gen(self):
-        val_rows = list(self.con.execute("SELECT * FROM data_entries WHERE split = 1")) # validation
-        rdEngine = random.Random(Dataset.r_seed)
-        rdEngine.shuffle(val_rows)
-
-        for row in val_rows:
+        for row in self.val_rows:
             rgb, gt, _ = Dataset._load_row(row)
             yield rgb, gt
 
