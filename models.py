@@ -36,12 +36,10 @@ class Model:
 
     def train(self, dataset : Dataset, save_history=True):
         self.history = self.graph.fit(
-            dataset.get_train_ds().__iter__(),
-            steps_per_epoch=math.floor(dataset.train_set_size()/self.parameters.batch_size),
-            validation_steps=None,
+            dataset.get_train_gen(),
             batch_size=self.parameters.batch_size,
             epochs=self.parameters.epochs,
-            validation_data=dataset.get_val_ds().__iter__()
+            validation_data=dataset.get_val_gen()
         )
 
         if save_history:

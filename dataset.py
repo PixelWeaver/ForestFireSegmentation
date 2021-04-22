@@ -3,7 +3,6 @@ import cv2
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
-from tensorflow.python.framework import dtypes
 from parameters import Parameters
 import math
 import sqlite3
@@ -11,8 +10,7 @@ from tqdm import tqdm
 import random
 import shutil
 import numpy as np
-import tensorflow as tf
-import tensorflow.keras.backend as K
+from generator import Generator
 
 
 def strip(st : str):
@@ -100,6 +98,18 @@ class Dataset:
             f"dataset/nir/{name}.png"
         )
 
+    def get_train_gen(self):
+        return Generator(self.params, self.train_rows)
+
+    def get_train_val_gen(self):
+        return Generator(self.params, self.train_rows + self.val_rows)
+
+    def get_val_gen(self):
+        return Generator(self.params, self.val_rows)
+
+    def get_test_gen(self):
+        return Generator(self.params, self.test_rows)
+
     def _count_fire_pixels(self):
         samples = list(self.cur.execute("SELECT rowid, name FROM data_entries"))
         
@@ -171,7 +181,7 @@ class Dataset:
         self.con.commit()
 
     @staticmethod
-    def _load_row(row):
+    def load_row(row):
         rgb_path, gt_path, nir_path = Dataset._paths_from_name(row[1])
 
         nir_im = None
@@ -189,51 +199,15 @@ class Dataset:
         val_rows = list(self.con.execute("SELECT * FROM data_entries WHERE split = 1"))[:200] # val
 
         for i in range(200):
-            rgb, gt, _ = Dataset._load_row(train_rows[i])
+            rgb, gt, _ = Dataset.load_row(train_rows[i])
             X_train[i] = rgb
             y_train[i] = gt
 
-            rgb, gt, _ = Dataset._load_row(val_rows[i])
+            rgb, gt, _ = Dataset.load_row(val_rows[i])
             X_val[i] = rgb
             y_val[i] = gt
 
         return X_train, y_train, X_val, y_val 
-
-    def train_set_size(self):
-        return list(self.con.execute("SELECT COUNT(*) FROM data_entries WHERE split = 0"))[0][0]
-
-    def _train_gen(self):
-        for row in self.train_rows:
-            rgb, gt, _ = Dataset._load_row(row)
-            rgb = tf.expand_dims(rgb, 0)
-            gt = tf.expand_dims(gt, 0)
-            yield rgb, gt
-
-    def get_train_ds(self):
-        ds = tf.data.Dataset.from_generator(
-            self._train_gen, 
-            output_types=(dtypes.uint16, dtypes.uint16), 
-            output_shapes=(
-                (1, self.params.input_dim[0], self.params.input_dim[1], 3), # Input dimension
-                (1, self.params.input_dim[0], self.params.input_dim[1], 1) # Output dimension
-            ))
-
-        return ds
-
-    def _val_gen(self):
-        for row in self.val_rows:
-            rgb, gt, _ = Dataset._load_row(row)
-            rgb = tf.expand_dims(rgb, 0)
-            gt = tf.expand_dims(gt, 0)
-            yield rgb, gt
-
-    def get_val_ds(self):
-        ds = tf.data.Dataset.from_generator(
-            self._val_gen, 
-            output_types=(dtypes.uint16, dtypes.uint16), 
-            output_shapes=((1, self.params.input_dim[0], self.params.input_dim[1], 3), (1, self.params.input_dim[0], self.params.input_dim[1], 1)))
-
-        return ds
             
     def _add_to_dataset(self, img, gt, nir, name : str, seq : int):
         cv2.imwrite(f"dataset/img/{name}.png", img)
