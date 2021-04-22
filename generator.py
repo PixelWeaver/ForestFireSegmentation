@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from parameters import Parameters
-from dataset import Dataset
+from utils import load_row
 import math
 
 class Generator(tf.keras.utils.Sequence):
@@ -25,7 +25,7 @@ class Generator(tf.keras.utils.Sequence):
         y = np.empty((self.params.batch_size, *self.params.input_dim, 1))
 
         for i, row in enumerate(rows):
-            X[i,], _, y[i,] = Dataset.load_row(row)
+            X[i,], _, y[i,] = load_row(row)
 
         return X, y
 

@@ -11,7 +11,7 @@ import random
 import shutil
 import numpy as np
 from generator import Generator
-
+from utils import paths_from_name, load_row
 
 def strip(st : str):
     return st.strip().replace('"', "")
@@ -87,16 +87,8 @@ class Dataset:
         samples = list(self.cur.execute(f"SELECT rowid, name FROM data_entries WHERE fire_pixels > 0 AND fire_pixels < {lower_bound}"))
         print(f"{len(samples)} samples would be discarded")
         for i, sample in enumerate(samples):
-            path, _, _ = Dataset._paths_from_name(sample[1])
+            path, _, _ = paths_from_name(sample[1])
             shutil.copy(path, f"discarded/{i}.png")
-
-    @staticmethod   
-    def _paths_from_name(name):
-        return (
-            f"dataset/img/{name}.png",
-            f"dataset/gt/{name}.png",
-            f"dataset/nir/{name}.png"
-        )
 
     def get_train_gen(self):
         return Generator(self.params, self.train_rows)
@@ -114,7 +106,7 @@ class Dataset:
         samples = list(self.cur.execute("SELECT rowid, name FROM data_entries"))
         
         for sample in tqdm(samples):
-            _, gt_path, _ = Dataset._paths_from_name(sample[1])
+            _, gt_path, _ = paths_from_name(sample[1])
             im = cv2.imread(gt_path)
             fpixels = cv2.countNonZero(cv2.cvtColor(im, cv2.COLOR_BGR2GRAY))
             
@@ -180,16 +172,6 @@ class Dataset:
         self.cur.executemany("UPDATE data_entries SET split = 2 WHERE rowid = ?", zip(iter(test)))
         self.con.commit()
 
-    @staticmethod
-    def load_row(row):
-        rgb_path, gt_path, nir_path = Dataset._paths_from_name(row[1])
-
-        nir_im = None
-        if nir_path is not None:
-            nir_im = cv2.imread(nir_path)
-
-        return cv2.imread(rgb_path), np.expand_dims(cv2.imread(gt_path, flags=cv2.IMREAD_GRAYSCALE), axis=2)/255, nir_im 
-
     def get_reduced_dataset(self):
         x_shape = (200, self.params.input_dim[0], self.params.input_dim[1], 3)
         y_shape = (200, self.params.input_dim[0], self.params.input_dim[1], 1)
@@ -199,11 +181,11 @@ class Dataset:
         val_rows = list(self.con.execute("SELECT * FROM data_entries WHERE split = 1"))[:200] # val
 
         for i in range(200):
-            rgb, gt, _ = Dataset.load_row(train_rows[i])
+            rgb, gt, _ = load_row(train_rows[i])
             X_train[i] = rgb
             y_train[i] = gt
 
-            rgb, gt, _ = Dataset.load_row(val_rows[i])
+            rgb, gt, _ = load_row(val_rows[i])
             X_val[i] = rgb
             y_val[i] = gt
 
