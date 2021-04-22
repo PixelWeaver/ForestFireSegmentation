@@ -1,6 +1,5 @@
 import abc
 from abc import abstractmethod
-import math
 from parameters import Parameters
 import tensorflow as tf
 from tensorflow.keras.layers import *
@@ -9,14 +8,11 @@ from dataset import Dataset
 
 
 metrics = [
-    tf.keras.metrics.AUC(name='auc'),
     tf.keras.metrics.Recall(name='recall'),
     tf.keras.metrics.TruePositives(name='tp'),
     tf.keras.metrics.TrueNegatives(name='tn'),
     tf.keras.metrics.FalsePositives(name='fp'),
     tf.keras.metrics.FalseNegatives(name='fn'),
-    tf.keras.metrics.Accuracy(name='accuracy'),
-    tf.keras.metrics.Precision(name='precision'),
     tf.keras.metrics.MeanIoU(num_classes=2, name='iou'),
     tf.keras.metrics.BinaryAccuracy(name='bin_accuracy'),
 ]
@@ -25,7 +21,7 @@ metrics = [
 class Model:
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, params):
+    def __init__(self, params : Parameters):
         self.parameters = params
         self.graph = None
         self.history = None
@@ -169,6 +165,6 @@ class UNetModel(Model):
 
         self.graph.compile(
             optimizer=optimizer(learning_rate=self.parameters.learning_rate),
-            loss=self.parameters.loss,
+            loss=tf.keras.losses.binary_crossentropy,
             metrics=metrics
         )
