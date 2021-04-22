@@ -6,7 +6,7 @@ from models import UNetModel
 import tensorflow as tf
 
 if __name__ == '__main__':
-    p = Parameters.from_file("test_run")
+    p = Parameters.from_file("flame_unet_1")
     d = Dataset(p)
     m = UNetModel(p)
     m.build(tf.keras.optimizers.Adam)
