@@ -223,13 +223,15 @@ class Dataset:
     def _val_gen(self):
         for row in self.val_rows:
             rgb, gt, _ = Dataset._load_row(row)
+            rgb = tf.expand_dims(rgb, 0)
+            gt = tf.expand_dims(gt, 0)
             yield rgb, gt
 
     def get_val_ds(self):
         ds = tf.data.Dataset.from_generator(
             self._val_gen, 
             output_types=(dtypes.uint16, dtypes.uint16), 
-            output_shapes=((self.params.input_dim[0], self.params.input_dim[1], 3), (self.params.input_dim[0], self.params.input_dim[1], 1)))
+            output_shapes=((1, self.params.input_dim[0], self.params.input_dim[1], 3), (1, self.params.input_dim[0], self.params.input_dim[1], 1)))
 
         return ds
             
