@@ -1,4 +1,3 @@
-from math import floor
 from dataset import Dataset
 from parameters import Parameters
 from utils import *
