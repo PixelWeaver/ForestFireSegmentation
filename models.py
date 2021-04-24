@@ -30,20 +30,46 @@ class Model:
     def build(self, optimizer):
         pass
 
-    def train(self, dataset : Dataset, save_history=True):
-        self.history = self.graph.fit(
-            dataset.get_train_gen(),
-            batch_size=self.parameters.batch_size,
-            epochs=self.parameters.epochs,
-            validation_data=dataset.get_val_gen()
-        )
+    def train(self, dataset : Dataset, save_history=True, save_model=True, include_val=False):
+        if not include_val:
+            self.history = self.graph.fit(
+                dataset.get_train_gen(), # Train split only
+                batch_size=self.parameters.batch_size,
+                epochs=self.parameters.epochs,
+                validation_data=dataset.get_val_gen()
+            )
+        else:
+            self.history = self.graph.fit(
+                dataset.get_train_val_gen(), # Train + val split
+                batch_size=self.parameters.batch_size,
+                epochs=self.parameters.epochs,
+            )
 
         if save_history:
             with open(f'histories/{self.parameters.name}.json', 'w') as file:
                 json.dump(self.history.history, file)
 
-    def test(self, x_test, y_test):
-        pass  # Do not implement/use before testing all architectures
+        if save_model:
+            self.graph.save(f"models/{self.parameters.name}")
+
+    def load_trained(self):
+        self.graph = tf.keras.models.load_model(f"models/{self.parameters.name}")
+
+    def test(self, dataset : Dataset):
+        results = self.graph.evaluate(
+            dataset.get_test_gen()
+        )
+
+        # Construct dict from result list
+        output = {}
+        for i, key in enumerate(self.graph.metrics_names):
+                output[key] = results[i]
+
+        # Dump it
+        with open(f'tests/{self.parameters.name}.json', 'w') as file:
+            json.dump(output, file)
+
+
 
 
 class MalwareDetectionModel(Model):
