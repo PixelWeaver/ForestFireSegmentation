@@ -76,7 +76,8 @@ class Dataset:
             "dataset/img",
             "dataset/gt",
             "dataset/nir",
-            "discarded"
+            "discarded",
+            "models"
         ]
 
         for path in dir_list:
