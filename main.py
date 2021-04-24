@@ -9,4 +9,9 @@ if __name__ == '__main__':
     d = Dataset(p)
     m = UNetModel(p)
     m.build(tf.keras.optimizers.Adam)
-    m.train(d)
+    m.train(d,
+        include_val=True,
+        save_history=True,
+        save_model=True
+    )
+    m.test()
