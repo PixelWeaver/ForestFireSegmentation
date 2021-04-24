@@ -56,9 +56,20 @@ class Model:
         self.graph = tf.keras.models.load_model(f"models/{self.parameters.name}")
 
     def test(self, dataset : Dataset):
-        self.graph.evaluate(
+        results = self.graph.evaluate(
             dataset.get_test_gen()
         )
+
+        # Construct dict from result list
+        output = {}
+        for i, key in enumerate(self.graph.metrics_names):
+                output[key] = results[i]
+
+        # Dump it
+        with open(f'tests/{self.parameters.name}.json', 'w') as file:
+            json.dump(output, file)
+
+
 
 
 class MalwareDetectionModel(Model):
