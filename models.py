@@ -15,6 +15,7 @@ metrics = [
     tf.keras.metrics.FalseNegatives(name='fn'),
     tf.keras.metrics.MeanIoU(num_classes=2, name='iou'),
     tf.keras.metrics.BinaryAccuracy(name='bin_accuracy'),
+    tf.keras.metrics.MeanSquaredError(name="mse")
 ]
 
 
