@@ -14,4 +14,4 @@ if __name__ == '__main__':
         save_history=True,
         save_model=True
     )
-    m.test()
+    m.test(d)
