@@ -78,7 +78,8 @@ class Dataset:
             "dataset/nir",
             "discarded",
             "models",
-            "tests"
+            "tests",
+            "histories"
         ]
 
         for path in dir_list:
