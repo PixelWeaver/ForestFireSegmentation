@@ -7,6 +7,7 @@ import json
 from dataset import Dataset
 import numpy as np
 import cv2
+from generator import Generator
 
 
 metrics = [
@@ -24,17 +25,25 @@ metrics = [
 class Model:
     __metaclass__ = abc.ABCMeta
 
+    def _learning_schedule(self, generator : Generator):
+        return tf.keras.optimizers.schedules.ExponentialDecay(
+            self.parameters.learning_rate,
+            decay_steps=len(generator),
+            decay_rate=0.96,
+            staircase=True)
+
     def __init__(self, params : Parameters):
         self.parameters = params
         self.graph = None
         self.history = None
 
     @abstractmethod
-    def build(self, optimizer):
+    def _build(self, generator : Generator):
         pass
 
     def train(self, dataset : Dataset, save_history=True, save_model=True, include_val=False):
         if not include_val:
+            self._build(dataset.get_train_gen())
             self.history = self.graph.fit(
                 dataset.get_train_gen(), # Train split only
                 batch_size=self.parameters.batch_size,
@@ -42,6 +51,7 @@ class Model:
                 validation_data=dataset.get_val_gen()
             )
         else:
+            self._build(dataset.get_train_val_gen())
             self.history = self.graph.fit(
                 dataset.get_train_val_gen(), # Train + val split
                 batch_size=self.parameters.batch_size,
@@ -143,7 +153,7 @@ class UNetModel(Model):
     def __init__(self, params):
         super().__init__(params)
 
-    def build(self, optimizer):
+    def build(self, generator : Generator):
         """
         Model found on:
         https://github.com/AlirezaShamsoshoara/Fire-Detection-UAV-Aerial-Image-Classification-Segmentation-UnmannedAerialVehicle
@@ -206,7 +216,7 @@ class UNetModel(Model):
         self.graph = tf.keras.Model(inputs=[inputs], outputs=[outputs])
 
         self.graph.compile(
-            optimizer=optimizer(learning_rate=self.parameters.learning_rate),
+            optimizer=tf.keras.optimizers.Adam(learning_rate=self._learning_schedule(generator)),
             loss=tf.keras.losses.binary_crossentropy,
             metrics=metrics
         )
