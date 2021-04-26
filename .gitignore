@@ -133,6 +133,7 @@ dmypy.json
 /figures/
 /dataset/
 /discarded/
+/models/
 
 # IDE related
 .vscode
