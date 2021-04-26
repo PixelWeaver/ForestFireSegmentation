@@ -82,6 +82,7 @@ class Model:
         preds_val_t = (results > 0.5).astype(np.uint8)
 
 
+
 class MalwareDetectionModel(Model):
     def __init__(self, params):
         super().__init__(params)

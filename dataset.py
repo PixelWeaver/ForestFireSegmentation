@@ -114,7 +114,7 @@ class Dataset:
         samples = np.zeros((len(ids), self.params.input_dim[0], self.params.input_dim[1], 3))
         for i, row in enumerate(rows):
             x, _, _ = load_row(row)
-            samples[i](x)
+            samples[i] = x
 
         return samples
 
