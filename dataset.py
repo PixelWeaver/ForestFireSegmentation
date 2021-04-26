@@ -120,6 +120,7 @@ class Dataset:
 
 
     def _count_fire_pixels(self):
+        print("Counting fire pixels")
         samples = list(self.cur.execute("SELECT rowid, name FROM data_entries"))
         
         for sample in tqdm(samples):

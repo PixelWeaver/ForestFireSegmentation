@@ -96,64 +96,11 @@ class Model:
         for i, pred in enumerate(preds_val_t):
             cv2.imwrite(f"predictions/{self.parameters.name}/{ids[i]}.png", pred)
 
-
-
-class MalwareDetectionModel(Model):
-    def __init__(self, params):
-        super().__init__(params)
-
-    def build(self, optimizer):
-        self.graph = tf.keras.Sequential()
-
-        # Input layer
-        self.graph.add(
-            tf.keras.layers.Bidirectional(
-                self.base_layer(True),
-                input_shape=self.parameters.input_dim)
-        )
-
-        # Hidden layers
-        for i in range(self.parameters.hidden_count):
-            self.graph.add(
-                tf.keras.layers.Bidirectional(
-                    self.base_layer(True if i < self.parameters.hidden_count - 1 else False)))
-
-        # Output layer
-        self.graph.add(
-            tf.keras.layers.Dense(
-                2,
-                activation="sigmoid",
-            )
-        )
-
-        self.graph.compile(
-            optimizer=optimizer(learning_rate=self.parameters.learning_rate),
-            loss=self.parameters.loss,
-            metrics=metrics
-        )
-
-    def base_layer(self, return_sequences):
-        return tf.keras.layers.GRU(
-            self.parameters.units,
-            return_sequences=return_sequences,
-            dropout=self.parameters.dropout,
-            recurrent_dropout=self.parameters.recurrent_dropout,
-            kernel_initializer="lecun_uniform",
-            recurrent_initializer="lecun_uniform",
-            bias_regularizer=tf.keras.regularizers.l1_l2(
-                l1=self.parameters.bias_l1,
-                l2=self.parameters.bias_l2),
-            recurrent_regularizer=tf.keras.regularizers.l1_l2(
-                l1=self.parameters.recurrent_l1,
-                l2=self.parameters.recurrent_l2)
-        )
-
-
 class UNetModel(Model):
     def __init__(self, params):
         super().__init__(params)
 
-    def build(self, generator : Generator):
+    def _build(self, generator : Generator):
         """
         Model found on:
         https://github.com/AlirezaShamsoshoara/Fire-Detection-UAV-Aerial-Image-Classification-Segmentation-UnmannedAerialVehicle
