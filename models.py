@@ -6,6 +6,7 @@ from tensorflow.keras.layers import *
 import json
 from dataset import Dataset
 import numpy as np
+import cv2
 
 
 metrics = [
@@ -72,14 +73,18 @@ class Model:
             json.dump(output, file)
 
     def prediction_test(self, dataset : Dataset):
+        ids = [
+            87648,
+            87586
+        ]
+
         results = self.graph.predict(
-            dataset.load_specific_ids([
-                87648,
-                87586
-            ])
+            dataset.load_specific_ids(ids)
         )
 
         preds_val_t = (results > 0.5).astype(np.uint8)
+        for i, pred in enumerate(preds_val_t):
+            cv2.imwrite(f"predictions/{self.parameters.name}/{ids[i]}.png", pred)
 
 
 class MalwareDetectionModel(Model):
