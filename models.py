@@ -87,6 +87,7 @@ class Model:
             cv2.imwrite(f"predictions/{self.parameters.name}/{ids[i]}.png", pred)
 
 
+
 class MalwareDetectionModel(Model):
     def __init__(self, params):
         super().__init__(params)

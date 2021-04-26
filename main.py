@@ -8,10 +8,5 @@ if __name__ == '__main__':
     p = Parameters.from_file("flame_unet_1")
     d = Dataset(p)
     m = UNetModel(p)
-    m.build(tf.keras.optimizers.Adam)
-    m.train(d,
-        include_val=False,
-        save_history=True,
-        save_model=True
-    )
-    m.test(d)
+    m.load_trained()
+    m.prediction_test(d)
