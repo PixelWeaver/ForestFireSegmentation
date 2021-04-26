@@ -79,7 +79,8 @@ class Dataset:
             "discarded",
             "models",
             "tests",
-            "histories"
+            "histories",
+            "predictions"
         ]
 
         for path in dir_list:
@@ -104,6 +105,19 @@ class Dataset:
 
     def get_test_gen(self):
         return Generator(self.params, self.test_rows)
+
+    def load_specific_ids(self, ids):
+        rows = []
+        for id in ids:
+            rows.extend(list(self.cur.execute(f"SELECT rowid, name FROM data_entries WHERE rowid = {id}")))
+
+        samples = np.zeros((len(ids), self.params.input_dim[0], self.params.input_dim[1], 3))
+        for i, row in enumerate(rows):
+            x, _, _ = load_row(row)
+            samples[i](x)
+
+        return samples
+
 
     def _count_fire_pixels(self):
         samples = list(self.cur.execute("SELECT rowid, name FROM data_entries"))

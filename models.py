@@ -5,6 +5,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import *
 import json
 from dataset import Dataset
+import numpy as np
 
 
 metrics = [
@@ -70,7 +71,15 @@ class Model:
         with open(f'tests/{self.parameters.name}.json', 'w') as file:
             json.dump(output, file)
 
+    def prediction_test(self, dataset : Dataset):
+        results = self.graph.predict(
+            dataset.load_specific_ids([
+                87648,
+                87586
+            ])
+        )
 
+        preds_val_t = (results > 0.5).astype(np.uint8)
 
 
 class MalwareDetectionModel(Model):
