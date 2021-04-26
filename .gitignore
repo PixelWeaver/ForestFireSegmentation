@@ -135,7 +135,7 @@ dmypy.json
 /discarded/
 /models/
 /histories/
-/test/
+/tests/
 
 # IDE related
 .vscode

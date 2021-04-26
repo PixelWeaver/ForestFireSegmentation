@@ -55,7 +55,9 @@ def plot_history(name, plot_val=True):
                 columns = [key]
                 if plot_val:
                     columns.append(f"val_{key}")
-                sns.lineplot(data=df[columns], palette="tab10", linewidth=2.5)
+                data=df[columns]
+                data.index = range(1,len(data)+1) # Start at epoch 1
+                sns.lineplot(data=data, palette="tab10", linewidth=2.5)
                 plt.tight_layout()
                 plt.savefig(f"figures/{name}/{key}")
                 plt.figure()
