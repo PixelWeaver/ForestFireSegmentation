@@ -8,6 +8,7 @@ from dataset import Dataset
 import numpy as np
 import cv2
 from generator import Generator
+import os
 
 
 metrics = [
@@ -91,6 +92,9 @@ class Model:
         results = self.graph.predict(
             dataset.load_specific_ids(ids)
         )
+
+        if not os.path.isdir(f"predictions/{self.parameters.name}"):
+            os.mkdir(f"predictions/{self.parameters.name}")
 
         preds_val_t = (results > 0.5).astype(np.uint8)
         for i, pred in enumerate(preds_val_t):
