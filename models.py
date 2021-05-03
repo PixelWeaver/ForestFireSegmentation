@@ -108,7 +108,11 @@ class Model:
 
         preds_val_t = (results > 0.5).astype(np.uint8)
         for i, pred in enumerate(preds_val_t):
-            cv2.imwrite(f"predictions/{self.parameters.name}/{ids[i]}.png", pred)
+            cv2.imwrite(f"predictions/{self.parameters.name}/{ids[i]}_pred_gt.png", pred)
+
+        
+        for i, sample in enumerate(dataset.load_specific_ids(ids)):
+            cv2.imwrite(f"predictions/{self.parameters.name}/{ids[i]}_rgb.png", sample)
 
 class UNetModel(Model):
     def __init__(self, params):
