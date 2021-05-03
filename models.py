@@ -9,7 +9,8 @@ import numpy as np
 import cv2
 from generator import Generator
 import os
-
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 metrics = [
     tf.keras.metrics.Recall(name='recall'),
@@ -95,6 +96,12 @@ class Model:
 
         if not os.path.isdir(f"predictions/{self.parameters.name}"):
             os.mkdir(f"predictions/{self.parameters.name}")
+
+        for i, pred in enumerate(results):
+            sns.heatmap(pred)
+            plt.tight_layout()
+            plt.savefig(f"predictions/{self.parameters.name}/{ids[i]}_heatmap.png")
+            plt.figure()
 
         preds_val_t = (results > 0.5).astype(np.uint8)
         for i, pred in enumerate(preds_val_t):
