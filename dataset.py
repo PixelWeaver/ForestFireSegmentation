@@ -108,10 +108,9 @@ class Dataset:
 
     def load_specific_ids(self, ids):
         rows = []
-        for id in ids:
-            rows.extend(list(self.cur.execute(f"SELECT rowid, name FROM data_entries WHERE rowid = {id}")))
+        rows.extend(list(self.cur.execute(f"SELECT rowid, name FROM data_entries WHERE name LIKE \"1812%\"")))
 
-        samples = np.zeros((len(ids), self.params.input_dim[0], self.params.input_dim[1], 3))
+        samples = np.zeros((len(rows), self.params.input_dim[0], self.params.input_dim[1], 3))
         for i, row in enumerate(rows):
             x, _, _ = load_row(row)
             samples[i] = x
