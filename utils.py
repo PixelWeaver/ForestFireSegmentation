@@ -28,7 +28,7 @@ def load_row(row):
         if nir_path is not None:
             nir_im = cv2.imread(nir_path)
 
-        return cv2.imread(rgb_path), np.expand_dims(cv2.imread(gt_path, flags=cv2.IMREAD_GRAYSCALE), axis=2)/255, nir_im 
+        return (cv2.imread(rgb_path), np.expand_dims(cv2.imread(gt_path, flags=cv2.IMREAD_GRAYSCALE), axis=2)/255, nir_im)
 
 def plot_history(name, plot_val=True):
     with open(f'histories/{name}.json', 'r') as fp:

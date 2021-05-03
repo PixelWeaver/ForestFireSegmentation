@@ -21,8 +21,8 @@ class Generator(tf.keras.utils.Sequence):
         return X, y
 
     def __data_generation(self, rows):
-        X = np.empty((self.params.batch_size, *self.params.input_dim, 3))
-        y = np.empty((self.params.batch_size, *self.params.input_dim, 1))
+        X = np.empty((self.params.batch_size, *self.params.input_dim, 3), dtype=np.uint8)
+        y = np.empty((self.params.batch_size, *self.params.input_dim, 1), dtype=np.bool)
 
         for i, row in enumerate(rows):
             X[i,], y[i,], _ = load_row(row)

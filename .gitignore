@@ -136,6 +136,7 @@ dmypy.json
 /models/
 /histories/
 /tests/
+/predictions/
 
 # IDE related
 .vscode
