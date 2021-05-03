@@ -4,7 +4,7 @@
     "bias_l2": 0,
     "crop_step": 256,
     "dropout": 0,
-    "epochs": 59,
+    "epochs": 100,
     "hidden_count": 3,
     "input_dim": [
         256,
