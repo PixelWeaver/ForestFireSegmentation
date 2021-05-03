@@ -101,10 +101,11 @@ class Model:
             os.mkdir(f"predictions/{self.parameters.name}")
 
         for i, pred in enumerate(results):
+            plt.figure()
             sns.heatmap(pred[:, :, 0])
             plt.tight_layout()
             plt.savefig(f"predictions/{self.parameters.name}/{ids[i]}_heatmap.png")
-            plt.figure()
+            plt.close()
 
         preds_val_t = (results > 0.5).astype(np.uint8)
         for i, pred in enumerate(preds_val_t):

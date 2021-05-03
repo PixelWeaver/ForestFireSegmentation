@@ -14,6 +14,6 @@ if __name__ == '__main__':
     #     save_history=False,
     #     save_model=True
     # )
-    # m.test(d)
     m.load_trained()
-    m.prediction_test(d)
+    m.test(d)
+    # m.prediction_test(d)
