@@ -98,7 +98,7 @@ class Model:
             os.mkdir(f"predictions/{self.parameters.name}")
 
         for i, pred in enumerate(results):
-            sns.heatmap(pred)
+            sns.heatmap(pred[:, :, 0])
             plt.tight_layout()
             plt.savefig(f"predictions/{self.parameters.name}/{ids[i]}_heatmap.png")
             plt.figure()
