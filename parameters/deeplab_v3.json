@@ -1,10 +1,10 @@
 {
-    "batch_size": 16,
+    "batch_size": 24,
     "crop_step": 256,
-    "epochs": 100,
+    "epochs": 300,
     "input_dim": [
         256,
         256
     ],
-    "learning_rate": 0.001
+    "learning_rate": 0.0001
 }
