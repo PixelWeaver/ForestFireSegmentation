@@ -26,18 +26,16 @@ from tensorflow.python.util.tf_export import keras_export
 
 @keras_export('keras.applications.resnet50.ResNet50',
               'keras.applications.ResNet50')
-@keras_modules_injection
+
 def ResNet50(*args, **kwargs):
   return resnet50.ResNet50(*args, **kwargs)
 
 
 @keras_export('keras.applications.resnet50.decode_predictions')
-@keras_modules_injection
 def decode_predictions(*args, **kwargs):
   return resnet50.decode_predictions(*args, **kwargs)
 
 
 @keras_export('keras.applications.resnet50.preprocess_input')
-@keras_modules_injection
 def preprocess_input(*args, **kwargs):
   return resnet50.preprocess_input(*args, **kwargs)
