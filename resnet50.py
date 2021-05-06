@@ -21,7 +21,6 @@ from __future__ import print_function
 
 from resnet import resnet50
 
-from tensorflow.python.keras.applications import keras_modules_injection
 from tensorflow.python.util.tf_export import keras_export
 
 
