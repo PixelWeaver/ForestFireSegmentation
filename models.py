@@ -215,6 +215,5 @@ class DeepLabV3Plus(Model):
             metrics=[
                 tf.keras.metrics.MeanIoU(num_classes=2, name='iou'),
                 tf.keras.metrics.BinaryAccuracy(name='bin_accuracy'),
-                tf.keras.metrics.MeanSquaredError(name="mse")
             ]
         )
