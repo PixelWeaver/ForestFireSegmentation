@@ -203,14 +203,14 @@ class DeepLabV3Plus(Model):
             backbone='resnet50'
         )
 
+        self.graph.build(
+            (None, self.parameters.input_dim[0], self.parameters.input_dim[1], 3)
+        )
+
         self.graph.compile(
             optimizer=tf.keras.optimizers.Adam(
                 learning_rate=self.parameters.learning_rate
             ),
             loss=tf.keras.losses.SparseCategoricalCrossentropy(),
-            metrics=metrics
-        )
-
-        self.graph.build(
-            (None, self.parameters.input_dim[0], self.parameters.input_dim[1], 3)
+            metrics=['bin_accuracy']
         )
