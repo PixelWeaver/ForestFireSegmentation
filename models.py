@@ -211,7 +211,7 @@ class DeepLabV3Plus(Model):
             optimizer=tf.keras.optimizers.Adam(
                 learning_rate=self.parameters.learning_rate
             ),
-            loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+            loss=tf.keras.losses.binary_crossentropy,
             metrics=[
                 tf.keras.metrics.BinaryAccuracy(name='bin_accuracy')
             ]
