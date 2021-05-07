@@ -203,7 +203,9 @@ class DeepLabV3Plus(Model):
         )
 
         self.graph.compile(
-            optimizer=tf.keras.optimizers.Adam(learning_rate=self._learning_schedule(generator)),
+            optimizer=tf.keras.optimizers.Adam(
+                learning_rate=self.parameters.learning_rate
+            ),
             loss=tf.keras.losses.SparseCategoricalCrossentropy(),
             metrics=metrics
         )
