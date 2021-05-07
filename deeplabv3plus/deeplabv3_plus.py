@@ -90,7 +90,8 @@ class DeeplabV3Plus(tf.keras.Model):
 
         self.out_conv = tf.keras.layers.Conv2D(self.num_classes,
                                                kernel_size=(1, 1),
-                                               padding='same')
+                                               padding='same',
+                                               activation='softmax')
 
     def call(self, inputs, training=None, mask=None):
         input_a = self.backbone_feature_1(inputs)
