@@ -20,10 +20,9 @@ class DeeplabV3Plus(tf.keras.Model):
         backbone:
             backbone to be used
     """
-    def __init__(self, num_classes, params, backbone='resnet50',  **kwargs):
+    def __init__(self, num_classes, backbone='resnet50', params=None,  **kwargs):
         super(DeeplabV3Plus, self).__init__()
 
-        self.parameters = params
         self.num_classes = num_classes
         self.backbone = backbone
         self.aspp = None
@@ -67,7 +66,6 @@ class DeeplabV3Plus(tf.keras.Model):
         return tf.keras.Model(inputs=input_layer, outputs=output_layer)
 
     def build(self, input_shape):
-        input_shape = (None, self.parameters.input_dim[0], self.parameters.input_dim[1], 3)
         self.backbone_feature_1 = self._get_backbone_feature('feature_1',
                                                              input_shape)
         self.backbone_feature_2 = self._get_backbone_feature('feature_2',

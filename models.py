@@ -204,6 +204,8 @@ class DeepLabV3Plus(Model):
             backbone='resnet50'
         )
 
+        self.graph.build(input_shape=(None, self.parameters.input_dim[0], self.parameters.input_dim[1], 3))
+
         self.graph.summary()
 
         self.graph.compile(
