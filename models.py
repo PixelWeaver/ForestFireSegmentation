@@ -186,6 +186,7 @@ class UNetModel(Model):
             loss=tf.keras.losses.binary_crossentropy,
             metrics=metrics
         )
+        
 
 
 class DeepLabV3Plus(Model):
@@ -209,3 +210,5 @@ class DeepLabV3Plus(Model):
             loss=tf.keras.losses.SparseCategoricalCrossentropy(),
             metrics=metrics
         )
+
+        self.graph.summary()
