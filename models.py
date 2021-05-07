@@ -12,7 +12,7 @@ import os
 import seaborn as sns
 import matplotlib.pyplot as plt
 from tensorflow.keras import backend as K
-from resnet50 import ResNet50
+from tensorflow.keras.applications.resnet50 import ResNet50
 
 metrics = [
     tf.keras.metrics.Recall(name='recall'),
