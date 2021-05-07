@@ -207,6 +207,8 @@ class DeepLabV3Plus(Model):
             (None, self.parameters.input_dim[0], self.parameters.input_dim[1], 3)
         )
 
+        self.graph.summary()
+
         self.graph.compile(
             optimizer=tf.keras.optimizers.Adam(
                 learning_rate=self.parameters.learning_rate
