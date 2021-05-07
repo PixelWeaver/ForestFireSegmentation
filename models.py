@@ -212,6 +212,6 @@ class DeepLabV3Plus(Model):
             ),
             loss=tf.keras.losses.binary_crossentropy,
             metrics=[
-                tf.keras.metrics.MeanIoU(num_classes=2, name='iou'),
+                tf.keras.metrics.BinaryAccuracy(name='bin_accuracy'),
             ]
         )
