@@ -200,11 +200,8 @@ class DeepLabV3Plus(Model):
         """
         self.graph = DeeplabV3Plus(
             num_classes=2,
-            backbone='resnet50'
-        )
-
-        self.graph.build(
-            (None, self.parameters.input_dim[0], self.parameters.input_dim[1], 3)
+            backbone='resnet50',
+            params=self.parameters
         )
 
         self.graph.summary()
