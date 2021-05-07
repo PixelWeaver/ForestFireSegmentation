@@ -212,5 +212,13 @@ class DeepLabV3Plus(Model):
                 learning_rate=self.parameters.learning_rate
             ),
             loss=tf.keras.losses.SparseCategoricalCrossentropy(),
-            metrics=['bin_accuracy']
+            metrics=[
+                tf.keras.metrics.Recall(name='recall'),
+                tf.keras.metrics.TruePositives(name='tp'),
+                tf.keras.metrics.TrueNegatives(name='tn'),
+                tf.keras.metrics.FalsePositives(name='fp'),
+                tf.keras.metrics.FalseNegatives(name='fn'),
+                tf.keras.metrics.BinaryAccuracy(name='bin_accuracy'),
+                tf.keras.metrics.MeanSquaredError(name="mse")
+            ]
         )
