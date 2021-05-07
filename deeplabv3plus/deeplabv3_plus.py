@@ -20,9 +20,10 @@ class DeeplabV3Plus(tf.keras.Model):
         backbone:
             backbone to be used
     """
-    def __init__(self, num_classes, backbone='resnet50', params=None,  **kwargs):
+    def __init__(self, num_classes, params, backbone='resnet50',  **kwargs):
         super(DeeplabV3Plus, self).__init__()
 
+        self.parameters = params
         self.num_classes = num_classes
         self.backbone = backbone
         self.aspp = None
