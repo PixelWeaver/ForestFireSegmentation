@@ -204,7 +204,7 @@ class DeepLabV3Plus(Model):
         )
 
         self.graph.build(
-            (self.parameters.input_dim[0], self.parameters.input_dim[1], 3)
+            (None, self.parameters.input_dim[0], self.parameters.input_dim[1], 3)
         )
 
         self.graph.compile(
