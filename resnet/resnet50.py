@@ -16,7 +16,6 @@ import warnings
 
 from . import get_submodules_from_kwargs
 from . import imagenet_utils
-from .imagenet_utils import decode_predictions
 from .imagenet_utils import _obtain_input_shape
 
 preprocess_input = imagenet_utils.preprocess_input
