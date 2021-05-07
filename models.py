@@ -206,8 +206,6 @@ class DeepLabV3Plus(Model):
 
         self.graph.build(input_shape=(None, self.parameters.input_dim[0], self.parameters.input_dim[1], 3))
 
-        self.graph.summary()
-
         self.graph.compile(
             optimizer=tf.keras.optimizers.Adam(
                 learning_rate=self.parameters.learning_rate
@@ -215,6 +213,5 @@ class DeepLabV3Plus(Model):
             loss=tf.keras.losses.binary_crossentropy,
             metrics=[
                 tf.keras.metrics.MeanIoU(num_classes=2, name='iou'),
-                tf.keras.metrics.BinaryAccuracy(name='bin_accuracy'),
             ]
         )

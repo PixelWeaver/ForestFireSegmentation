@@ -8,4 +8,5 @@ if __name__ == '__main__':
     d = Dataset(p)
     m = DeepLabV3Plus(p)
     m.train(d)
-    m.prediction_test(d)
+    m.graph.summary()
+    #m.prediction_test(d)
