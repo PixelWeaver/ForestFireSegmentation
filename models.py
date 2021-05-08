@@ -258,11 +258,11 @@ class DeepLabV3Plus(Model):
         
         base_model.summary()
 
-        image_features = base_model.get_layer('activation_39').output
+        image_features = base_model.get_layer('conv5_block3_out').output
         x_a = DeepLabV3Plus._ASPP(image_features)
         x_a = DeepLabV3Plus._upsample(tensor=x_a, size=[self.parameters.input_dim[0] // 4, self.parameters.input_dim[1] // 4])
 
-        x_b = base_model.get_layer('activation_9').output
+        x_b = base_model.get_layer('conv2_block3_out').output
         x_b = Conv2D(filters=48, kernel_size=1, padding='same',
                     kernel_initializer='he_normal', name='low_level_projection', use_bias=False)(x_b)
         x_b = BatchNormalization(name=f'bn_low_level_projection')(x_b)
@@ -289,7 +289,7 @@ class DeepLabV3Plus(Model):
             from_logits: Whether `y_pred` is expected to be a logits tensor. By default,
             we assume that `y_pred` encodes a probability distribution.
         '''     
-        self.graph = Model(inputs=base_model.input, outputs=x, name='DeepLabV3_Plus')
+        self.graph = tf.keras.Model(inputs=base_model.input, outputs=x, name='DeepLabV3_Plus')
 
         for layer in self.graph.layers:
             if isinstance(layer, tf.keras.layers.BatchNormalization):
