@@ -256,6 +256,8 @@ class DeepLabV3Plus(Model):
         base_model = ResNet50(input_shape=(
             self.parameters.input_dim[0], self.parameters.input_dim[1], 3), weights='imagenet', include_top=False)
         
+        base_model.summary()
+
         image_features = base_model.get_layer('activation_39').output
         x_a = DeepLabV3Plus._ASPP(image_features)
         x_a = DeepLabV3Plus._upsample(tensor=x_a, size=[self.parameters.input_dim[0] // 4, self.parameters.input_dim[1] // 4])
