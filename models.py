@@ -263,8 +263,6 @@ class DeepLabV3Plus(Model):
         """
         base_model = ResNet50(input_shape=(
             self.parameters.input_dim[0], self.parameters.input_dim[1], 3), weights='imagenet', include_top=False)
-        
-        base_model.summary()
 
         image_features = base_model.get_layer('conv5_block3_out').output
         x_a = DeepLabV3Plus._ASPP(image_features)
@@ -289,7 +287,7 @@ class DeepLabV3Plus(Model):
         x = Activation('relu', name='activation_decoder_2')(x)
         x = DeepLabV3Plus._upsample(x, [self.parameters.input_dim[0], self.parameters.input_dim[1]])
 
-        x = Conv2D(2, (1, 1), name='output_layer')(x)
+        x = Conv2D(1, (1, 1), name='output_layer')(x)
 
         self.graph = tf.keras.Model(inputs=base_model.input, outputs=x, name='DeepLabV3_Plus')
 
