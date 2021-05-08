@@ -116,6 +116,12 @@ class Model:
         for i, sample in enumerate(dataset.load_specific_ids(ids)):
             cv2.imwrite(f"predictions/{self.parameters.name}/{ids[i]}_rgb.png", sample)
 
+    def summarize(self):
+        input_shape = (1, self.parameters.input_dim[0], self.parameters.input_dim[1], 3)
+        input_tensor = tf.random.normal(input_shape)
+        self.graph(input_tensor) # Run just one random sample through it to make sure it has been built before printing network summary
+        self.graph.summary()
+
 class UNetModel(Model):
     def __init__(self, params):
         super().__init__(params)
@@ -282,13 +288,7 @@ class DeepLabV3Plus(Model):
         x = DeepLabV3Plus._upsample(x, [self.parameters.input_dim[0], self.parameters.input_dim[1]])
 
         x = Conv2D(2, (1, 1), name='output_layer')(x)
-        '''
-        x = Activation('softmax')(x) 
-        tf.losses.SparseCategoricalCrossentropy(from_logits=True)
-        Args:
-            from_logits: Whether `y_pred` is expected to be a logits tensor. By default,
-            we assume that `y_pred` encodes a probability distribution.
-        '''     
+
         self.graph = tf.keras.Model(inputs=base_model.input, outputs=x, name='DeepLabV3_Plus')
 
         for layer in self.graph.layers:
