@@ -204,7 +204,7 @@ class DeepLabV3Plus(Model):
             backbone='resnet50'
         )
 
-        input_shape = (None, self.parameters.input_dim[0], self.parameters.input_dim[1], 3)
+        input_shape = (1, self.parameters.input_dim[0], self.parameters.input_dim[1], 3)
         input_tensor = tf.random.normal(input_shape)
         self.graph(input_tensor)
 
