@@ -287,7 +287,7 @@ class DeepLabV3Plus(Model):
         x = Activation('relu', name='activation_decoder_2')(x)
         x = DeepLabV3Plus._upsample(x, [self.parameters.input_dim[0], self.parameters.input_dim[1]])
 
-        x = Conv2D(1, (1, 1), name='output_layer')(x)
+        x = Conv2D(1, (1, 1), activation='sigmoid', name='output_layer')(x)
 
         self.graph = tf.keras.Model(inputs=base_model.input, outputs=x, name='DeepLabV3_Plus')
 
