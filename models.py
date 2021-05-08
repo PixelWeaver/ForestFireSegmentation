@@ -204,7 +204,11 @@ class DeepLabV3Plus(Model):
             backbone='resnet50'
         )
 
-        self.graph.build(input_shape=(None, self.parameters.input_dim[0], self.parameters.input_dim[1], 3))
+        input_shape = (None, self.parameters.input_dim[0], self.parameters.input_dim[1], 3)
+        input_tensor = tf.random.normal(input_shape)
+        self.graph(input_tensor)
+
+        self.graph.summary()
 
         self.graph.compile(
             optimizer=tf.keras.optimizers.Adam(
