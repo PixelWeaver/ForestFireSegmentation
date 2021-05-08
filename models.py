@@ -48,6 +48,7 @@ class Model:
     def train(self, dataset : Dataset, save_history=True, save_model=True, include_val=False):
         if not include_val:
             self._build(dataset.get_train_gen())
+            self._summarize()
             self.history = self.graph.fit(
                 dataset.get_train_gen(), # Train split only
                 batch_size=self.parameters.batch_size,
@@ -56,6 +57,7 @@ class Model:
             )
         else:
             self._build(dataset.get_train_val_gen())
+            self._summarize()
             self.history = self.graph.fit(
                 dataset.get_train_val_gen(), # Train + val split
                 batch_size=self.parameters.batch_size,
@@ -116,7 +118,7 @@ class Model:
         for i, sample in enumerate(dataset.load_specific_ids(ids)):
             cv2.imwrite(f"predictions/{self.parameters.name}/{ids[i]}_rgb.png", sample)
 
-    def summarize(self):
+    def _summarize(self):
         input_shape = (1, self.parameters.input_dim[0], self.parameters.input_dim[1], 3)
         input_tensor = tf.random.normal(input_shape)
         self.graph(input_tensor) # Run just one random sample through it to make sure it has been built before printing network summary
