@@ -298,6 +298,7 @@ class DeepLabV3Plus(Model):
             elif isinstance(layer, tf.keras.layers.Conv2D):
                 layer.kernel_regularizer = tf.keras.regularizers.l2(1e-4)
 
-        self.graph.compile(loss=tf.losses.SparseCategoricalCrossentropy(from_logits=True), 
-                    optimizer=tf.keras.optimizers.Adam(learning_rate=self._learning_schedule(generator)),
-                    metrics=metrics)
+        self.graph.compile(
+            optimizer=tf.keras.optimizers.Adam(learning_rate=self._learning_schedule(generator)),
+            loss=tf.keras.losses.binary_crossentropy,
+            metrics=metrics)
