@@ -20,7 +20,7 @@ metrics = [
     tf.keras.metrics.TrueNegatives(name='tn'),
     tf.keras.metrics.FalsePositives(name='fp'),
     tf.keras.metrics.FalseNegatives(name='fn'),
-    tf.keras.metrics.MeanIoU(num_classes=2, name='iou'),
+    tf.keras.metrics.MeanIoU(num_classes=1, name='iou'),
     tf.keras.metrics.BinaryAccuracy(name='bin_accuracy'),
     tf.keras.metrics.MeanSquaredError(name="mse")
 ]
