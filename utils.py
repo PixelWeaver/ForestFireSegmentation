@@ -61,5 +61,3 @@ def plot_history(name, plot_val=True):
                 plt.tight_layout()
                 plt.savefig(f"figures/{name}/{key}")
                 plt.figure()
-
-plot_history("deeplab_v3")
