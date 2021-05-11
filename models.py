@@ -14,17 +14,25 @@ import matplotlib.pyplot as plt
 from tensorflow.keras import backend as K
 from tensorflow.keras.applications.resnet50 import ResNet50
 
+class CustomMeanIoU(tf.keras.metrics.MeanIoU):
+    def __init__(self, num_classes, name=None, dtype=None):
+        tf.keras.metrics.MeanIoU.__init__(self, num_classes, name=name, dtype=dtype)
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        threshold = 0.5
+        y_pred_th = tf.cast((y_pred > threshold), tf.int32)
+        return tf.keras.metrics.MeanIoU.update_state(self, y_true, y_pred_th, sample_weight)
+
 metrics = [
     tf.keras.metrics.Recall(name='recall'),
     tf.keras.metrics.TruePositives(name='tp'),
     tf.keras.metrics.TrueNegatives(name='tn'),
     tf.keras.metrics.FalsePositives(name='fp'),
     tf.keras.metrics.FalseNegatives(name='fn'),
-    tf.keras.metrics.MeanIoU(num_classes=1, name='iou'),
+    CustomMeanIoU(num_classes=2, name='iou'),
     tf.keras.metrics.BinaryAccuracy(name='bin_accuracy'),
     tf.keras.metrics.MeanSquaredError(name="mse")
 ]
-
 
 class Model:
     __metaclass__ = abc.ABCMeta
