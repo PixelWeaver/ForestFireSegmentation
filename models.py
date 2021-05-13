@@ -13,6 +13,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from tensorflow.keras import backend as K
 from tensorflow.keras.applications.resnet50 import ResNet50
+from tensorflow.keras.applications.efficientnet import EfficientNetB4
 
 class CustomMeanIoU(tf.keras.metrics.MeanIoU):
     def __init__(self, num_classes, name=None, dtype=None):
@@ -271,6 +272,54 @@ class DeepLabV3Plus(Model):
         """
         base_model = ResNet50(input_shape=(
             self.parameters.input_dim[0], self.parameters.input_dim[1], 3), weights='imagenet', include_top=False)
+
+        image_features = base_model.get_layer('conv5_block3_out').output
+        x_a = DeepLabV3Plus._ASPP(image_features)
+        x_a = DeepLabV3Plus._upsample(tensor=x_a, size=[self.parameters.input_dim[0] // 4, self.parameters.input_dim[1] // 4])
+
+        x_b = base_model.get_layer('conv2_block3_out').output
+        x_b = Conv2D(filters=48, kernel_size=1, padding='same',
+                    kernel_initializer='he_normal', name='low_level_projection', use_bias=False)(x_b)
+        x_b = BatchNormalization(name=f'bn_low_level_projection')(x_b)
+        x_b = Activation('relu', name='low_level_activation')(x_b)
+
+        x = concatenate([x_a, x_b], name='decoder_concat')
+
+        x = Conv2D(filters=256, kernel_size=3, padding='same', activation='relu',
+                kernel_initializer='he_normal', name='decoder_conv2d_1', use_bias=False)(x)
+        x = BatchNormalization(name=f'bn_decoder_1')(x)
+        x = Activation('relu', name='activation_decoder_1')(x)
+
+        x = Conv2D(filters=256, kernel_size=3, padding='same', activation='relu',
+                kernel_initializer='he_normal', name='decoder_conv2d_2', use_bias=False)(x)
+        x = BatchNormalization(name=f'bn_decoder_2')(x)
+        x = Activation('relu', name='activation_decoder_2')(x)
+        x = DeepLabV3Plus._upsample(x, [self.parameters.input_dim[0], self.parameters.input_dim[1]])
+
+        x = Conv2D(1, (1, 1), activation='sigmoid', name='output_layer')(x)
+
+        self.graph = tf.keras.Model(inputs=base_model.input, outputs=x, name='DeepLabV3_Plus')
+
+        for layer in self.graph.layers:
+            if isinstance(layer, tf.keras.layers.BatchNormalization):
+                layer.momentum = 0.9997
+                layer.epsilon = 1e-5
+            elif isinstance(layer, tf.keras.layers.Conv2D):
+                layer.kernel_regularizer = tf.keras.regularizers.l2(1e-4)
+
+        self.graph.compile(
+            optimizer=tf.keras.optimizers.Adam(learning_rate=self._learning_schedule(generator)),
+            loss=tf.keras.losses.binary_crossentropy,
+            metrics=metrics)
+
+class DLV3P_EfficientNet(DeepLabV3Plus):
+    def __init__(self, params: Parameters):
+        super().__init__(params)
+
+    def _build(self, generator: Generator):
+        base_model = EfficientNetB4(input_shape=(
+            self.parameters.input_dim[0], self.parameters.input_dim[1], 3), weights='imagenet', include_top=False)
+        base_model.summary()
 
         image_features = base_model.get_layer('conv5_block3_out').output
         x_a = DeepLabV3Plus._ASPP(image_features)
