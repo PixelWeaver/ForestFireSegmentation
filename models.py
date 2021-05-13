@@ -321,11 +321,11 @@ class DLV3P_EfficientNet(DeepLabV3Plus):
             self.parameters.input_dim[0], self.parameters.input_dim[1], 3), weights='imagenet', include_top=False)
         base_model.summary()
 
-        image_features = base_model.get_layer('conv5_block3_out').output
+        image_features = base_model.get_layer('block7b_add').output
         x_a = DeepLabV3Plus._ASPP(image_features)
         x_a = DeepLabV3Plus._upsample(tensor=x_a, size=[self.parameters.input_dim[0] // 4, self.parameters.input_dim[1] // 4])
 
-        x_b = base_model.get_layer('conv2_block3_out').output
+        x_b = base_model.get_layer('block2b_add').output
         x_b = Conv2D(filters=48, kernel_size=1, padding='same',
                     kernel_initializer='he_normal', name='low_level_projection', use_bias=False)(x_b)
         x_b = BatchNormalization(name=f'bn_low_level_projection')(x_b)
