@@ -4,8 +4,8 @@ from utils import *
 from models import *
 
 if __name__ == '__main__':
-    p = Parameters.from_file("deeplab_v3")
+    p = Parameters.from_file("dlv3_efficientnet")
     d = Dataset(p)
-    m = DeepLabV3Plus(p)
+    m = DLV3P_EfficientNet(p)
     m.train(d)
     m.prediction_test(d)
