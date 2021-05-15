@@ -105,8 +105,3 @@ def cmp_plot_history(names : "list[str]", plot_val=True):
         plt.tight_layout()
         plt.savefig(f"figures/cmp_{resulting_name}/{key}")
         plt.figure()
-
-cmp_plot_history([
-    "dlv3_efficientnet",
-    "dlv3_efficientnet_2"
-])
