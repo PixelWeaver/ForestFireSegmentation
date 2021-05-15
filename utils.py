@@ -61,7 +61,8 @@ def plot_history(name, plot_val=True):
                     columns.append(f"val_{key}")
                 data=df[columns]
                 data.index = range(1,len(data)+1) # Start at epoch 1
-                sns.lineplot(data=data, palette="tab10", linewidth=2.5)
+                plot = sns.lineplot(data=data, palette="tab10", linewidth=1.5)
+                plot.set(yscale='log')
                 plt.tight_layout()
                 plt.savefig(f"figures/{name}/{key}")
                 plt.figure()
@@ -99,7 +100,8 @@ def cmp_plot_history(names : "list[str]", plot_val=True):
     # Plot all metrics
     for key in plots.keys():
         plots[key].index = range(1,len(plots[key])+1) # Start at epoch 1
-        sns.lineplot(data=plots[key], palette="tab10", linewidth=2.5)
+        plot = sns.lineplot(data=plots[key], palette="tab10", linewidth=1.5)
+        plot.set(yscale='log')
         plt.tight_layout()
         plt.savefig(f"figures/cmp_{resulting_name}/{key}")
         plt.figure()
