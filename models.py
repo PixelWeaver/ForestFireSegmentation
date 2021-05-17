@@ -1,5 +1,6 @@
 import abc
 from abc import abstractmethod
+
 from parameters import Parameters
 import tensorflow as tf
 from tensorflow.keras.layers import *
@@ -421,7 +422,7 @@ class SqueezeUNet(Model):
         inputs = Input((self.parameters.input_dim[0], self.parameters.input_dim[1], 3))
         s = Lambda(lambda x: x / 255)(inputs)
 
-        c1 = Conv2D(64, (3, 3), strides=(2, 2), padding='same', activation='relu', name='conv1')(s)
+        c1 = Conv2D(64, (3, 3), strides=(2, 2), padding='same', activation='relu')(s)
         p1 = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding='same')(c1)
 
         f1 = SqueezeUNet._fire_module(p1, 16, 64)
@@ -474,7 +475,18 @@ class ATTSqueezeUNet(Model):
         super().__init__(params)
 
     @staticmethod
-    def _channel_shuffle(input, groups=3):
+    def _att_gate(x, gate, filters=64):
+        wx = Conv2D(filters, 1, strides=(2, 2))(x)
+        wg = Conv2D(filters, 1)(gate)
+        query = add([wx, wg])
+        sigma_1 = ReLU()(query)
+        psi = Conv2D(1, 1)(sigma_1)
+        sigma_2 = Activation('sigmoid')(psi)
+        up = UpSampling2D()(sigma_2)
+        return multiply([x, up])
+
+    @staticmethod
+    def _channel_shuffle(input, groups=1):
         _, h, w, c = input.get_shape().as_list()
         output = tf.reshape(input, shape=tf.convert_to_tensor([tf.shape(input)[0], h, w, groups, c // groups]))
         output = tf.transpose(output, tf.convert_to_tensor([0, 1, 2, 4, 3]))
@@ -485,13 +497,13 @@ class ATTSqueezeUNet(Model):
     def _fire_module(input, s_filters, e_filters):
         # Squeeze layer
         output = Conv2D(s_filters, (1, 1), activation='relu', padding='same')(input)
-        output = BatchNormalization(axis=3, activation='relu')(output)
+        output = BatchNormalization(axis=3)(output)
 
         # Extend layer
         l_conv = Conv2D(e_filters, (1, 1), activation='relu', padding='same')(output)
-        r_conv = DepthwiseConv2D(e_filters, (3, 3), activation='relu', padding='same')(output)
+        r_conv = DepthwiseConv2D((3, 3), activation='relu', padding='same')(output)
         r_conv = ATTSqueezeUNet._channel_shuffle(r_conv)
-        output = concatenate([l_conv, r_conv], axis=3, activation='relu')
+        output = concatenate([l_conv, r_conv], axis=3)
         
         return output
 
@@ -500,7 +512,7 @@ class ATTSqueezeUNet(Model):
         # Extend layer
         l_conv = Conv2D(e_filters, (1, 1), activation='relu', padding='same')(input)
         r_conv = Conv2D(e_filters, (3, 3), activation='relu', padding='same')(input)
-        output = concatenate([l_conv, r_conv], axis=3, activation='relu')
+        output = concatenate([l_conv, r_conv], axis=3)
 
         # Squeeze layer
         output =  Conv2D(s_filters, (1, 1), activation='relu', padding='same')(output)
@@ -515,7 +527,7 @@ class ATTSqueezeUNet(Model):
         ### Encoder
         s = Lambda(lambda x: x / 255)(inputs)
 
-        c1 = Conv2D(64, (7, 7), strides=(2, 2), padding='same', activation='relu', name='conv1')(s)
+        c1 = Conv2D(64, (7, 7), strides=(2, 2), padding='same', activation='relu')(s)
         p1 = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding='same')(c1)
 
         f1 = ATTSqueezeUNet._fire_module(p1, 16, 64)
@@ -530,12 +542,12 @@ class ATTSqueezeUNet(Model):
         p3 = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding="same")(f7)
 
         f8 = ATTSqueezeUNet._fire_module(p3, 48, 192)
-        c2 = Conv2D(64, (1, 1), strides=(1, 1), padding='same', activation='relu', name='conv1')(f8)
-        c3 = Conv2D(64, (3, 3), strides=(1, 1), padding='same', activation='relu', name='conv1')(c2)
+        c2 = Conv2D(64, (1, 1), strides=(1, 1), padding='same', activation='relu')(f8)
+        c3 = Conv2D(64, (3, 3), strides=(1, 1), padding='same', activation='relu')(c2)
 
         ### Decoder
         # ATT-skip 1
-        ag1 = AdditiveAttention()([f4,c3]) 
+        ag1 = ATTSqueezeUNet._att_gate(f4, c3, 64) 
 
         # Upsample 1    
         df1 = ATTSqueezeUNet._defire_module(c3, 48, 192)
@@ -543,25 +555,25 @@ class ATTSqueezeUNet(Model):
         c4 = Conv2DTranspose(128, 3, strides=(1, 1), padding='same')(up1)
         
         # ATT-skip 2
-        ag2 = AdditiveAttention()([f2, c4])
+        ag2 = ATTSqueezeUNet._att_gate(f2, c4, 32)
 
         # Upsample 2
         df2 = ATTSqueezeUNet._defire_module(c4, 32, 128)
         up2 = concatenate([ag2, df2])
-        c5 = Conv2DTranspose(64, 3, strides=(2, 2), padding='same')(up2)
+        c5 = Conv2DTranspose(64, 3, strides=(1, 1), padding='same')(up2)
 
         # ATT-skip 3
-        ag3 = AdditiveAttention()([c1, c5])
+        ag3 = ATTSqueezeUNet._att_gate(c1, c5, 32)
 
         # Upsample 3
-        df3 = ATTSqueezeUNet._defire_module(c4, 16, 64)
+        df3 = ATTSqueezeUNet._defire_module(c5, 16, 64)
         up3 = concatenate([ag3, df3])
         c6 = Conv2DTranspose(32, 3, strides=(2, 2), padding='same')(up3)
 
         c7 = Conv2D(64, (3, 3), strides=(1, 1), padding='same', activation='relu')(c6)
         c8 = Conv2D(1, (1, 1), activation='sigmoid')(c7)
 
-        self.graph = Model(inputs=inputs, outputs=c8)
+        self.graph = tf.keras.Model(inputs=[inputs], outputs=c8)
 
         self.graph.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=self._learning_schedule(generator)),
