@@ -1,0 +1,10 @@
+{
+    "batch_size": 12,
+    "crop_step": 256,
+    "epochs": 50,
+    "input_dim": [
+        256,
+        256
+    ],
+    "learning_rate": 0.0001
+}
