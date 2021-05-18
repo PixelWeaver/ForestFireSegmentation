@@ -4,10 +4,7 @@ from utils import *
 from models import *
 
 if __name__ == '__main__':
-    p = Parameters.from_file("att_squeeze_unet_opt")
+    p = Parameters.from_file("squeeze_unet")
     d = Dataset(p)
-    m = ATTSqueezeUNet(p)
-    m.train(d,
-        save_history=False,
-        include_val=True)
-    m.test(d)
+    m = SqueezeUNet(p)
+    m.train(d)

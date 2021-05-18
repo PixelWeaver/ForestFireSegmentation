@@ -462,7 +462,7 @@ class SqueezeUNet(Model):
         x = UpSampling2D(size=(2, 2))(x)
         x = Conv2D(1, (1, 1), activation='sigmoid')(x)
 
-        self.graph = Model(inputs=inputs, outputs=x)
+        self.graph = tf.keras.Model(inputs=inputs, outputs=x)
 
         self.graph.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=self._learning_schedule(generator)),
