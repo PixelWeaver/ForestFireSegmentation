@@ -10,3 +10,4 @@ if __name__ == '__main__':
     m.train(d,
         save_history=False,
         include_val=True)
+    m.test(d)
