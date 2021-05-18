@@ -1,7 +1,7 @@
 {
     "batch_size": 12,
     "crop_step": 256,
-    "epochs": 100,
+    "epochs": 200,
     "input_dim": [
         256,
         256

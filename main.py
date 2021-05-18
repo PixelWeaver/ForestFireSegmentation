@@ -8,7 +8,5 @@ if __name__ == '__main__':
     d = Dataset(p)
     m = ATTSqueezeUNet(p)
     m.train(d,
-        include_val=True,
         save_history=False,
-    )
-    m.test(d)
+        include_val=True)

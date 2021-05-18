@@ -109,3 +109,5 @@ def cmp_plot_history(names : "list[str]", plot_val=True):
         plt.tight_layout()
         plt.savefig(f"figures/cmp_{resulting_name}/{key}")
         plt.figure()
+
+plot_history('att_squeeze_unet')
