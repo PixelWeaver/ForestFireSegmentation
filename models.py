@@ -97,7 +97,9 @@ class Model:
     def prediction_test(self, dataset : Dataset):
         ids = [
             87648,
-            87586
+            87586,
+            11984,
+            8424
         ]
 
         ids.extend([*range(87603, 87638)]) # Picture 002_rgb.png
