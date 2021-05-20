@@ -78,7 +78,7 @@ class Model:
             self.graph.save(f"models/{self.parameters.name}")
 
     def load_trained(self):
-        self.graph = tf.keras.models.load_model(f"models/{self.parameters.name}")
+        self.graph = tf.keras.models.load_model(f"models/{self.parameters.name}", custom_objects={"CustomMeanIoU": CustomMeanIoU})
 
     def test(self, dataset : Dataset):
         results = self.graph.evaluate(
