@@ -7,8 +7,5 @@ if __name__ == '__main__':
     p = Parameters.from_file("squeeze_unet_opt")
     d = Dataset(p)
     m = SqueezeUNet(p)
-    m.train(d,
-        save_history=False,
-        save_model=True,
-        include_val=True)
-    m.test(d)
+    m.load_trained()
+    m.prediction_test(d)

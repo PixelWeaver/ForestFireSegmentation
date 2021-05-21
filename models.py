@@ -108,12 +108,10 @@ class Model:
         if not os.path.isdir(f"predictions/baseline"):
             os.mkdir(f"predictions/baseline")
 
-            for i, sample in enumerate(dataset.load_specific_ids(ids)):
-                cv2.imwrite(f"predictions/baseline/{ids[i]}_rgb.png", sample)
-
             for id in ids:
-                rows = dataset.cur.executemany(f"SELECT data_entries WHERE rowid = {id}")
-                _, gt, _ = load_row(rows[0])
+                rows = list(dataset.cur.execute(f"SELECT * FROM data_entries WHERE rowid = {id}"))
+                rgb, gt, _ = load_row(rows[0])
+                cv2.imwrite(f"predictions/baseline/{id}_rgb.png", rgb)
                 cv2.imwrite(f"predictions/baseline/{id}_gt.png", gt * 255)
 
         results = self.graph.predict(
