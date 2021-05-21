@@ -109,8 +109,8 @@ class Dataset:
 
     def load_specific_ids(self, ids):
         rows = []
-        id_string = functools.reduce(lambda x, y: x + ", " + y, map(lambda x: str(x), ids))
-        rows.extend(list(self.cur.execute(f"SELECT rowid, name FROM data_entries WHERE rowid IN ({id_string})")))
+        for i in ids:
+            rows.extend(list(self.cur.execute(f"SELECT rowid, name FROM data_entries WHERE rowid = {id}")))
 
         rgb = np.zeros((len(rows), self.params.input_dim[0], self.params.input_dim[1], 3))
         gt = np.zeros((len(rows), self.params.input_dim[0], self.params.input_dim[1], 1))
