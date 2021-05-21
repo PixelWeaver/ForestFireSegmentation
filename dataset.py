@@ -109,7 +109,7 @@ class Dataset:
 
     def load_specific_ids(self, ids):
         rows = []
-        for i in ids:
+        for id in ids:
             rows.extend(list(self.cur.execute(f"SELECT rowid, name FROM data_entries WHERE rowid = {id}")))
 
         rgb = np.zeros((len(rows), self.params.input_dim[0], self.params.input_dim[1], 3))
