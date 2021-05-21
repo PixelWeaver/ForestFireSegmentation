@@ -112,12 +112,15 @@ class Dataset:
         id_string = functools.reduce(lambda x, y: x + ", " + y, map(lambda x: str(x), ids))
         rows.extend(list(self.cur.execute(f"SELECT rowid, name FROM data_entries WHERE rowid IN ({id_string})")))
 
-        samples = np.zeros((len(rows), self.params.input_dim[0], self.params.input_dim[1], 3))
-        for i, row in enumerate(rows):
-            x, _, _ = load_row(row)
-            samples[i] = x
+        rgb = np.zeros((len(rows), self.params.input_dim[0], self.params.input_dim[1], 3))
+        gt = np.zeros((len(rows), self.params.input_dim[0], self.params.input_dim[1], 1))
 
-        return samples
+        for i, row in enumerate(rows):
+            x, y, _ = load_row(row)
+            rgb[i] = x
+            gt[i] = y
+
+        return rgb, gt
 
     def _count_fire_pixels(self):
         print("Counting fire pixels")
