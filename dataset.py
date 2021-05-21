@@ -1,3 +1,4 @@
+import functools
 import seaborn as sns
 import cv2
 import matplotlib.pyplot as plt
@@ -108,7 +109,8 @@ class Dataset:
 
     def load_specific_ids(self, ids):
         rows = []
-        rows.extend(list(self.cur.execute(f"SELECT rowid, name FROM data_entries WHERE name LIKE \"1812%\"")))
+        id_string = functools.reduce(lambda x, y: x + ", " + y, map(lambda x: str(x), ids))
+        rows.extend(list(self.cur.execute(f"SELECT rowid, name FROM data_entries WHERE rowid IN ({id_string})")))
 
         samples = np.zeros((len(rows), self.params.input_dim[0], self.params.input_dim[1], 3))
         for i, row in enumerate(rows):
@@ -116,7 +118,6 @@ class Dataset:
             samples[i] = x
 
         return samples
-
 
     def _count_fire_pixels(self):
         print("Counting fire pixels")
