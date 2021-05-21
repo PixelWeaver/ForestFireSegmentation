@@ -1,5 +1,6 @@
 import abc
 from abc import abstractmethod
+import enum
 from utils import load_row, paths_from_name
 
 from parameters import Parameters
@@ -105,17 +106,17 @@ class Model:
 
         ids.extend([*range(87603, 87638)]) # Picture 002_rgb.png
 
+        rgb, gt = dataset.load_specific_ids(ids)
+
         if not os.path.isdir(f"predictions/baseline"):
             os.mkdir(f"predictions/baseline")
 
-            for id in ids:
-                rows = list(dataset.cur.execute(f"SELECT * FROM data_entries WHERE rowid = {id}"))
-                rgb, gt, _ = load_row(rows[0])
-                cv2.imwrite(f"predictions/baseline/{id}_rgb.png", rgb)
-                cv2.imwrite(f"predictions/baseline/{id}_gt.png", gt * 255)
+            for i, id in enumerate(ids):
+                cv2.imwrite(f"predictions/baseline/{id}_rgb.png", rgb[i])
+                cv2.imwrite(f"predictions/baseline/{id}_gt.png", gt[i] * 255)
 
         results = self.graph.predict(
-            dataset.load_specific_ids(ids)
+            rgb
         )
 
         if not os.path.isdir(f"predictions/{self.parameters.name}"):
