@@ -1,5 +1,6 @@
 import abc
 from abc import abstractmethod
+from utils import load_row, paths_from_name
 
 from parameters import Parameters
 import tensorflow as tf
@@ -104,6 +105,17 @@ class Model:
 
         ids.extend([*range(87603, 87638)]) # Picture 002_rgb.png
 
+        if not os.path.isdir(f"predictions/baseline"):
+            os.mkdir(f"predictions/baseline")
+
+            for i, sample in enumerate(dataset.load_specific_ids(ids)):
+                cv2.imwrite(f"predictions/baseline/{ids[i]}_rgb.png", sample)
+
+            for id in ids:
+                rows = dataset.cur.executemany(f"SELECT data_entries WHERE rowid = {id}")
+                _, gt, _ = load_row(rows[0])
+                cv2.imwrite(f"predictions/baseline/{id}_gt.png", gt * 255)
+
         results = self.graph.predict(
             dataset.load_specific_ids(ids)
         )
@@ -118,13 +130,9 @@ class Model:
             plt.savefig(f"predictions/{self.parameters.name}/{ids[i]}_heatmap.png")
             plt.close()
 
-        preds_val_t = (results > 0.5).astype(np.uint8)
+        preds_val_t = (results > 0.5).astype(np.uint8) * 255
         for i, pred in enumerate(preds_val_t):
             cv2.imwrite(f"predictions/{self.parameters.name}/{ids[i]}_pred_gt.png", pred)
-
-        
-        for i, sample in enumerate(dataset.load_specific_ids(ids)):
-            cv2.imwrite(f"predictions/{self.parameters.name}/{ids[i]}_rgb.png", sample)
 
     def _summarize(self):
         input_shape = (1, self.parameters.input_dim[0], self.parameters.input_dim[1], 3)
