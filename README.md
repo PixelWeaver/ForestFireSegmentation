@@ -24,4 +24,4 @@ DLV3+ w/ EfficientNetB4 | 0.967 | 0.93 | 0.964 | 0.028 | 22M
 Squeeze U-Net | 0.930 | 0.897 | 0.946 | 0.042 | 2.5M
 ATT Squeeze U-Net | 0.928 | 0.893 | 0.944 | 0.042 | 885K
 
-![Results](/figures/prediction_plate.png | width=500)
+<img src="/figures/prediction_plate.png" alt="Results" width="500">
