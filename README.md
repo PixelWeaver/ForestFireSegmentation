@@ -1,4 +1,4 @@
-# ForestFireSegmentation
+# Forest Fire Segmentation
 
 With the advent of climate change comes the fear wildfires will become a rising concern in the near future as is hinted by several environmental studies. This fear has
 already become a reality for some parts of the globe.
@@ -14,3 +14,5 @@ The implemented architectures are:
 * DeepLabv3+ with EfficientNet-B4 backbone
 * Squeeze U-Net 
 * ATT Squeeze U-Net
+
+![Results](/figures/prediction_plate.png)
