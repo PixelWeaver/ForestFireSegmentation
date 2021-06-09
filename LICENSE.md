@@ -152,17 +152,3 @@ In no event unless required by applicable law or agreed to in writing will any c
 #### 12\. No Trademark Waiver
 
 Trademark rights are not licensed under this public license.
-
-### END OF TERMS AND CONDITIONS
-
-#### How to apply the Atmosphere Software License Version 0.4–🚪🌳⛅🛂💸 to your work
-
-Attach the following boilerplate notice, with the fields enclosed by parentheses replaced with your own identifying information. If you want to include any optional provisions in your license, include the emojis corresponding to those provisions at the end of your license version number.
-
-Copyright (YEAR) (COPYRIGHT HOLDER) Atmosphere Software License Version 0.4–🚪🌳⛅🛂💸
-
-If your program has an interactive mode, you should have it provide the name and version number of the Atmosphere License when it starts up, and provide a link to where the full license can be found.
-
-In the repository for your program, include a full copy of the license, including these instructions. Make sure the version of the License you're using includes all the optional provisions you intended to select. If you're working from a [static document version of the license](/atmosphere-license/atmosphere-static/index.html), remove the brackets from around the provisions you want to use and removed the word "OPTIONAL" before them, both in the version number and in the license text. Be sure to delete any optional provisions you don't want to use. If you make a mistake that causes the license to be ambiguous, an optional provision is considered to be included in your license if and only if its text appears in the license without the word "OPTIONAL".
-
-For more information or to find new versions of this license, check [open-austin.org/atmosphere-license](/).
